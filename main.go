@@ -3,6 +3,8 @@ package main
 import (
 	"fabric-go-sdk/sdkInit"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
 	"os"
 	"time"
 )
@@ -15,8 +17,9 @@ const (
 var App sdkInit.Application
 
 func main() {
-	// init orgs information
-
+	/*
+		设置默认组织与通道，确定MSP位置，同时设置组织默认值
+	*/
 	orgs := []*sdkInit.OrgInfo{
 		{
 			OrgAdminUser:  "Admin",
@@ -27,8 +30,6 @@ func main() {
 			OrgAnchorFile: "/root/go/src/fabric-go-sdk/fixtures/channel-artifacts/Org1MSPanchors.tx",
 		},
 	}
-
-	// init sdk env info
 	info := sdkInit.SdkEnvInfo{
 		ChannelID:        "mychannel",
 		ChannelConfig:    "/root/go/src/fabric-go-sdk/fixtures/channel-artifacts/channel.tx",
@@ -40,35 +41,39 @@ func main() {
 		ChaincodePath:    "/root/go/src/fabric-go-sdk/chaincode/",
 		ChaincodeVersion: cc_version,
 	}
-
-	// sdk setup
+	/*
+		启动SDK
+	*/
 	sdk, err := sdkInit.Setup("config.yaml", &info)
 	if err != nil {
 		fmt.Println(">> SDK setup error:", err)
 		os.Exit(-1)
 	}
-
-	// create channel and join
+	/*
+		创建通道，并将节点加入
+	*/
 	if err := sdkInit.CreateAndJoinChannel(&info); err != nil {
 		fmt.Println(">> Create channel and join error:", err)
 		os.Exit(-1)
 	}
 
-	// create chaincode lifecycle
 	if err := sdkInit.CreateCCLifecycle(&info, 1, false, sdk); err != nil {
 		fmt.Println(">> create chaincode lifecycle error: %v", err)
 		os.Exit(-1)
 	}
 
-	// invoke chaincode set status
 	fmt.Println(">> 通过链码外部服务设置链码状态......")
-
+	/*
+		初始化链码服务
+	*/
 	if err := info.InitService(info.ChaincodeID, info.ChannelID, info.Orgs[0], sdk); err != nil {
 
 		fmt.Println("InitService successful")
 		os.Exit(-1)
 	}
-
+	/*
+		创建代码与区块链服务接口实体
+	*/
 	App = sdkInit.Application{
 		SdkEnvInfo: &info,
 	}
@@ -76,35 +81,106 @@ func main() {
 
 	defer info.EvClient.Unregister(sdkInit.BlockListener(info.EvClient))
 	defer info.EvClient.Unregister(sdkInit.ChainCodeEventListener(info.EvClient, info.ChaincodeID))
-
-	a := []string{"set", "ID1", "123"}
-	ret, err := App.Set(a)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("<--- 添加信息　--->：", ret)
-
-	a = []string{"set", "ID2", "456"}
-	ret, err = App.Set(a)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("<--- 添加信息　--->：", ret)
-
-	a = []string{"set", "ID3", "789"}
-	ret, err = App.Set(a)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("<--- 添加信息　--->：", ret)
-
-	a = []string{"get", "ID3"}
-	response, err := App.Get(a)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("<--- 查询信息　--->：", response)
-
 	time.Sleep(time.Second * 10)
-
+	/*
+		创建并设置代码与外部的服务接口
+	*/
+	r := gin.Default()
+	r.GET("/k2RawSignRegister", func(c *gin.Context) {
+		id := c.Query("ID")
+		k2 := c.Query("K2")
+		rawsign := c.Query("Rawsign")
+		a := []string{"K2RawSignRegister", id, k2, rawsign}
+		response, err := App.K2RawSignRegister(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.GET("/k2RawSignQuery", func(c *gin.Context) {
+		id := c.Query("ID")
+		a := []string{"K2RawSignQuery", id}
+		response, err := App.K2RawSignQuery(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.GET("/k2RawSignDelete", func(c *gin.Context) {
+		id := c.Query("ID")
+		a := []string{"K2RawSignDelete", id}
+		response, err := App.K2RawSignDelete(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.GET("/companyViewRecordRegister", func(c *gin.Context) {
+		id := c.Query("ID")
+		resumeID := c.Query("ResumeID")
+		schoolCode := c.Query("SchoolCode")
+		staffID := c.Query("StaffID")
+		companyID := c.Query("CompanyID")
+		a := []string{"CompanyViewRecordRegister", id, resumeID, schoolCode, staffID, companyID}
+		response, err := App.CompanyViewRecordRegister(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.GET("/companyViewRecordQuery", func(c *gin.Context) {
+		id := c.Query("ID")
+		a := []string{"CompanyViewRecordQuery", id}
+		response, err := App.CompanyViewRecordQuery(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.GET("/companyViewRecordDelete", func(c *gin.Context) {
+		id := c.Query("ID")
+		a := []string{"CompanyViewRecordDelete", id}
+		response, err := App.CompanyViewRecordDelete(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.Run(":9090")
 }
