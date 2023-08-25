@@ -1,0 +1,6 @@
+cd ~/go/src
+把fabric-go-sdk.zip解压到~/go/src
+cd fabric-go-sdk
+cd fixtures
+docker-compose up -d
+cd ..
