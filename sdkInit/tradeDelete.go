@@ -4,7 +4,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 )
 
-func (t *Application) K2RawSignDelete(args []string) (string, error) {
+func (t *Application) TradeDelete(args []string) (string, error) {
 	var tempArgs [][]byte
 	for i := 1; i < len(args); i++ {
 		tempArgs = append(tempArgs, []byte(args[i]))

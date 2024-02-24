@@ -3,51 +3,40 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"time"
-
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"strconv"
 )
 
 type SimpleAsset struct {
 }
 
 /*
-保存用户和对应的k2
-ID对应用户的区块链id
-K2为对应用户的密钥一部分
-RawSign为简历的明文签名
+保存用户
 */
-type k2RawSign struct {
-	ID      string `json:"ID"`
-	K2      string `json:"K2"`
-	RawSign []byte `json:"RawSign"`
+type User struct {
+	Account     string      `json:"Account"`
+	CompanyInfo CompanyInfo `json:"CompanyInfo"`
+	Balance     int64       `json:"Balance"`
 }
 
 /*
-用户简历对应信息被访问的信息保存
-Nomber为被访问次数
-IdReadRecordsMap为查询信息
+公司基本信息
 */
-type companyViewRecordMap struct {
-	ID               string                    `json:"ID"`
-	Number           int                       `json:"Number"`
-	IdReadRecordsMap map[int]companyViewRecord `json:"IdReadRecordsMap"`
+type CompanyInfo struct {
+	Name  string `json:"Name"`
+	Type  string `json:"Type"`
+	Owner string `json:"Owner"`
 }
 
 /*
-ResumeID为简历id
-ReadAt为简历被查询时间
-SchoolCode为学校id
-StaffID为学号
-CompanyID为公司ID
+订单信息
 */
-type companyViewRecord struct {
-	ResumeID   string    `json:"ResumeID"`
-	ReadAt     time.Time `json:"ReadAt"`
-	SchoolCode string    `json:"SchoolCode"`
-	StaffID    string    `json:"StaffID"`
-	CompanyID  string    `json:"CompanyID"`
+type Trade struct {
+	TradeId     string `json:"TradeId"`
+	FromAccount string `json:"FromAccount"`
+	Volume      int64  `json:"Volume"`
+	Price       int64  `json:"Price"`
 }
 
 // Init /*区块链的初始化
@@ -60,18 +49,21 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 	fn, args := stub.GetFunctionAndParameters()
 	switch fn {
-	case "k2RawSignRegister":
-		return t.k2RawSignRegister(stub, args)
-	case "k2RawSignQuery":
-		return t.k2RawSignQuery(stub, args)
-	case "k2RawSignDelete":
-		return t.k2RawSignDelete(stub, args)
-	case "companyViewRecordRegister":
-		return t.companyViewRecordRegister(stub, args)
-	case "companyViewRecordQuery":
-		return t.companyViewRecordQuery(stub, args)
-	case "companyViewRecordDelete":
-		return t.companyViewRecordDelete(stub, args)
+	case "userRegister":
+		return t.UserRegister(stub, args)
+	case "userQuery":
+		return t.UserQuery(stub, args)
+	case "userDelete":
+		return t.UserDelete(stub, args)
+	case "tradeRegister":
+		return t.TradeRegister(stub, args)
+	case "tradeQuery":
+		return t.TradeQuery(stub, args)
+	case "tradeDelete":
+		return t.TradeDelete(stub, args)
+	case "transaction":
+		return t.Transaction(stub, args)
+
 	default:
 		return shim.Error("Unsupported function")
 	}
@@ -79,47 +71,54 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 }
 
 /*
-创建一个id对应的k2存储结构体并实现上链
+创建一个account对应的User存储结构体并实现上链
 */
-func (t *SimpleAsset) k2RawSignRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of args.Expecting 3")
+func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 5 {
+		return shim.Error("Incorrect number of args.Expecting 5")
 	}
-	id := args[0]
-	k2 := args[1]
-	rawsign := args[2]
-	if id == "" || k2 == "" || rawsign == "" {
+	acc := args[0]
+	bal := args[1]
+	nam := args[2]
+	typ := args[3]
+	own := args[4]
+	if acc == "" || bal == "" || nam == "" || typ == "" || own == "" {
 		return shim.Error("Invalid args.")
 	}
-	idByes, err := stub.GetState(id)
-	if err == nil && len(idByes) != 0 {
-		return shim.Error("id already exists")
+	accountByes, err := stub.GetState(acc)
+	if err == nil && len(accountByes) != 0 {
+		return shim.Error("account already exists")
 	}
-	rawSign := []byte(rawsign)
-	k2rawsign := k2RawSign{
-		ID:      id,
-		K2:      k2,
-		RawSign: rawSign,
+	balance, _ := strconv.ParseInt(bal, 10, 64)
+	company := CompanyInfo{
+		Name:  nam,
+		Type:  typ,
+		Owner: own,
 	}
-	userByes, err := json.Marshal(k2rawsign)
+	user := User{
+		Account:     acc,
+		CompanyInfo: company,
+		Balance:     balance,
+	}
+	userByes, err := json.Marshal(user)
 	if err != nil {
-		return shim.Error("marshal k2rawsign error")
+		return shim.Error("marshal user error")
 	}
-	if err = stub.PutState(id, userByes); err != nil {
+	if err = stub.PutState(acc, userByes); err != nil {
 		return shim.Error("Failed to put state")
 	}
 	return shim.Success(nil)
 }
 
 /*
-输入id从区块链中取出对应的k2结构体
+输入account从区块链中取出对应的User结构体
 */
-func (t *SimpleAsset) k2RawSignQuery(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+func (t *SimpleAsset) UserQuery(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
-	id := args[0]
-	idBytes, err := stub.GetState(id)
+	acc := args[0]
+	idBytes, err := stub.GetState(acc)
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
@@ -127,93 +126,60 @@ func (t *SimpleAsset) k2RawSignQuery(stub shim.ChaincodeStubInterface, args []st
 }
 
 /*
-从区块链中删除id对应的结构体
+从区块链中删除account对应的结构体
 */
-func (t *SimpleAsset) k2RawSignDelete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+func (t *SimpleAsset) UserDelete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
-	id := args[0]
-	if err := stub.DelState(id); err != nil {
+	acc := args[0]
+	if err := stub.DelState(acc); err != nil {
 		return shim.Error("Failed to delete k2rawsign")
 	}
 	return shim.Success(nil)
 }
 
 /*
-通过输入相关数据，同时输入的用户id要在最后添加3个0
-会查询是否存在记录，不存在重新创建公司查看履历记录表
-若存在则在原记录后添加新记录
+创建一个tradeid对应的Trade存储结构体并实现上链
 */
-func (t *SimpleAsset) companyViewRecordRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 5 {
-		return shim.Error("Incorrect number of args.Expecting 5")
+func (t *SimpleAsset) TradeRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of args.Expecting 4")
 	}
 	id := args[0]
-	resumeID := args[1]
-	schoolCode := args[2]
-	staffID := args[3]
-	companyID := args[4]
-	if id == "" || resumeID == "" || schoolCode == "" || staffID == "" || companyID == "" {
+	from := args[1]
+	vol := args[2]
+	pri := args[3]
+	if id == "" || from == "" || vol == "" || pri == "" {
 		return shim.Error("Invalid args.")
 	}
-	idByes, err := stub.GetState(id)
-	if err != nil {
+	tradeByes, err := stub.GetState(id)
+	if err != nil && len(tradeByes) != 0 {
 		return shim.Error("Search error!!")
 	}
-	var recordMap companyViewRecordMap
-	if len(idByes) != 0 {
-		time1 := time.Now()
-		if err = json.Unmarshal(idByes, &recordMap); err != nil {
-			return shim.Error("Failed to unmarshal recordMap")
-		}
-		record := companyViewRecord{
-			ResumeID:   resumeID,
-			ReadAt:     time1,
-			SchoolCode: schoolCode,
-			StaffID:    staffID,
-			CompanyID:  companyID,
-		}
-		recordMap.ID = id
-		recordMap.Number = recordMap.Number + 1
-		recordMap.IdReadRecordsMap[recordMap.Number] = record
-		newrecordMap, err := json.Marshal(recordMap)
-		if err != nil {
-			return shim.Error("marshal recordMap error")
-		}
-		if err = stub.PutState(id, newrecordMap); err != nil {
-			return shim.Error("Failed to put state")
-		}
-		return shim.Success(nil)
-	} else {
-		recordMap.IdReadRecordsMap = make(map[int]companyViewRecord)
-		time1 := time.Now()
-		record := companyViewRecord{
-			ResumeID:   resumeID,
-			ReadAt:     time1,
-			SchoolCode: schoolCode,
-			StaffID:    staffID,
-			CompanyID:  companyID,
-		}
-		recordMap.ID = id
-		recordMap.Number = 0
-		recordMap.IdReadRecordsMap[0] = record
-		newrecordMap, err := json.Marshal(recordMap)
-		if err != nil {
-			return shim.Error("marshal recordMap error")
-		}
-		if err = stub.PutState(id, newrecordMap); err != nil {
-			return shim.Error("Failed to put state")
-		}
-		return shim.Success(nil)
+	volume, _ := strconv.ParseInt(vol, 10, 64)
+	price, _ := strconv.ParseInt(pri, 10, 64)
+	trade := Trade{
+		TradeId:     id,
+		FromAccount: from,
+		Volume:      volume,
+		Price:       price,
 	}
+	traByes, err := json.Marshal(trade)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(id, traByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
 
 }
 
 /*
-查询用户简历查看记录，用户id同样加3个0
+查询交易信息
 */
-func (t *SimpleAsset) companyViewRecordQuery(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+func (t *SimpleAsset) TradeQuery(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
@@ -226,15 +192,70 @@ func (t *SimpleAsset) companyViewRecordQuery(stub shim.ChaincodeStubInterface, a
 }
 
 /*
-删除对应用户id的简历查看记录
+删除交易信息
 */
-func (t *SimpleAsset) companyViewRecordDelete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+
+func (t *SimpleAsset) TradeDelete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
 	id := args[0]
 	if err := stub.DelState(id); err != nil {
 		return shim.Error("Failed to delete companyViewRecordMap")
+	}
+	return shim.Success(nil)
+}
+
+/*
+执行交易from->to
+*/
+func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []string) peer.Response { //执行资金的密态转移
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of args.Expecting 3")
+	}
+	userFrom, userTo, bal := args[0], args[1], args[2]
+	existFrom, err := stub.GetState(userFrom)
+	if err == nil && len(existFrom) == 0 {
+		return shim.Error("sender does not exist")
+	}
+	existTo, err := stub.GetState(userTo)
+	if err == nil && len(existTo) == 0 {
+		return shim.Error("receiver does not exist")
+	}
+	var from, to User
+	if userFrom == "" || userTo == "" || bal == "" {
+		return shim.Error("Invalid args")
+	}
+	balance, _ := strconv.ParseInt(bal, 10, 64)
+	userFromBytes, err := stub.GetState(userFrom)
+	if err != nil {
+		return shim.Error("Failed to get userFrom state")
+	}
+	if err = json.Unmarshal(userFromBytes, &from); err != nil {
+		return shim.Error("Failed to unmarshal userFrom")
+	}
+	userToByes, err := stub.GetState(userTo)
+	if err != nil {
+		return shim.Error("Failed to get userFrom state")
+	}
+	if err = json.Unmarshal(userToByes, &to); err != nil {
+		return shim.Error("Failed to unmarshal userFrom")
+	}
+	from.Balance = from.Balance - balance
+	to.Balance = to.Balance + balance
+	newFrom, err := json.Marshal(from)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	newTo, err := json.Marshal(to)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(from.Account, newFrom); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	if err = stub.PutState(to.Account, newTo); err != nil {
+		return shim.Error("Failed to put state")
 	}
 	return shim.Success(nil)
 }

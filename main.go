@@ -86,12 +86,14 @@ func main() {
 		创建并设置代码与外部的服务接口
 	*/
 	r := gin.Default()
-	r.GET("/k2RawSignRegister", func(c *gin.Context) {
-		id := c.Query("ID")
-		k2 := c.Query("K2")
-		rawsign := c.Query("Rawsign")
-		a := []string{"K2RawSignRegister", id, k2, rawsign}
-		response, err := App.K2RawSignRegister(a)
+	r.GET("/userRegister", func(c *gin.Context) {
+		acc := c.Query("Account")
+		bal := c.Query("Balance")
+		nam := c.Query("Name")
+		typ := c.Query("Type")
+		own := c.Query("Owner")
+		a := []string{"UserRegister", acc, bal, nam, typ, own}
+		response, err := App.UserRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"result": err,
@@ -103,10 +105,10 @@ func main() {
 			})
 		}
 	})
-	r.GET("/k2RawSignQuery", func(c *gin.Context) {
-		id := c.Query("ID")
-		a := []string{"K2RawSignQuery", id}
-		response, err := App.K2RawSignQuery(a)
+	r.GET("/userQuery", func(c *gin.Context) {
+		acc := c.Query("Account")
+		a := []string{"UserQuery", acc}
+		response, err := App.UserQuery(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"result": err,
@@ -118,10 +120,10 @@ func main() {
 			})
 		}
 	})
-	r.GET("/k2RawSignDelete", func(c *gin.Context) {
-		id := c.Query("ID")
-		a := []string{"K2RawSignDelete", id}
-		response, err := App.K2RawSignDelete(a)
+	r.GET("/UserDelete", func(c *gin.Context) {
+		acc := c.Query("Account")
+		a := []string{"UserDelete", acc}
+		response, err := App.UserDelete(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"result": err,
@@ -133,14 +135,13 @@ func main() {
 			})
 		}
 	})
-	r.GET("/companyViewRecordRegister", func(c *gin.Context) {
+	r.GET("/tradeRegister", func(c *gin.Context) {
 		id := c.Query("ID")
-		resumeID := c.Query("ResumeID")
-		schoolCode := c.Query("SchoolCode")
-		staffID := c.Query("StaffID")
-		companyID := c.Query("CompanyID")
-		a := []string{"CompanyViewRecordRegister", id, resumeID, schoolCode, staffID, companyID}
-		response, err := App.CompanyViewRecordRegister(a)
+		from := c.Query("From")
+		vol := c.Query("Volume")
+		pri := c.Query("Price")
+		a := []string{"TradeRegister", id, from, vol, pri}
+		response, err := App.TradeRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"result": err,
@@ -152,10 +153,10 @@ func main() {
 			})
 		}
 	})
-	r.GET("/companyViewRecordQuery", func(c *gin.Context) {
+	r.GET("/tradeQuery", func(c *gin.Context) {
 		id := c.Query("ID")
-		a := []string{"CompanyViewRecordQuery", id}
-		response, err := App.CompanyViewRecordQuery(a)
+		a := []string{"TradeQuery", id}
+		response, err := App.TradeQuery(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"result": err,
@@ -167,10 +168,27 @@ func main() {
 			})
 		}
 	})
-	r.GET("/companyViewRecordDelete", func(c *gin.Context) {
+	r.GET("/tradeDelete", func(c *gin.Context) {
 		id := c.Query("ID")
-		a := []string{"CompanyViewRecordDelete", id}
-		response, err := App.CompanyViewRecordDelete(a)
+		a := []string{"TradeDelete", id}
+		response, err := App.TradeDelete(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.GET("/transaction", func(c *gin.Context) {
+		from := c.Query("From")
+		to := c.Query("To")
+		bal := c.Query("Balance")
+		a := []string{"Transaction", from, to, bal}
+		response, err := App.Transaction(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"result": err,
