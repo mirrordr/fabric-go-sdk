@@ -18,15 +18,51 @@ type User struct {
 	Account     string      `json:"Account"`
 	CompanyInfo CompanyInfo `json:"CompanyInfo"`
 	Balance     int64       `json:"Balance"`
+	Type        string      `json:"Type"`
+	Examine     Examine     `json:"Examine"`
+}
+
+/*
+审核相关
+*/
+type Examine struct {
+	IsExamine   string `json:"IsExamine"`
+	ExamineType string `json:"ExamineType"`
+	Examiner    string `json:"Examiner"`
+	Sign        string `json:"Sign"`
 }
 
 /*
 公司基本信息
 */
 type CompanyInfo struct {
-	Name  string `json:"Name"`
-	Type  string `json:"Type"`
-	Owner string `json:"Owner"`
+	Name                     string                   `json:"Name"`
+	Type                     string                   `json:"Type"`
+	Owner                    string                   `json:"Owner"`
+	RegistrationNumber       string                   `json:"RegistrationNumber"` // 统一社会信用代码
+	Address                  string                   `json:"Address"`
+	BusinessScope            string                   `json:"BusinessScope"`       // 经营范围
+	Contact                  Contact                  `json:"Contact"`             // 联系方式
+	EstablishmentDate        string                   `json:"EstablishmentDate"`   // 成立日期
+	RegisteredCapital        string                   `json:"RegisteredCapital"`   // 注册资本
+	TaxRegistration          string                   `json:"TaxRegistration"`     // 税务登记证明文件路径或ID
+	OrganizationCode         string                   `json:"OrganizationCode"`    // 组织机构代码证文件路径或ID
+	BusinessLicense          string                   `json:"BusinessLicense"`     // 营业执照文件路径或ID
+	CertificationStatus      string                   `json:"CertificationStatus"` // 认证状态，如是否通过环境认证
+	AuthorizedRepresentative AuthorizedRepresentative `json:"AuthorizedRepresentative"`
+	Status                   string                   `json:"Status"`
+}
+
+type AuthorizedRepresentative struct {
+	Name             string `json:"Name"`
+	Position         string `json:"Position"`
+	IDNumber         string `json:"IDNumber"`
+	AuthorizationDoc string `json:"AuthorizationDoc"` // 授权代表授权书文件路径或ID
+}
+
+type Contact struct {
+	Phone string `json:"Phone"`
+	Email string `json:"Email"`
 }
 
 /*
