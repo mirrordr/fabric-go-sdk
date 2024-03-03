@@ -1,6 +1,7 @@
 package main
 
 import (
+	"chaincode/tanhesuan"
 	"encoding/json"
 	"fmt"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
@@ -10,6 +11,8 @@ import (
 
 type SimpleAsset struct {
 }
+
+var Huashi tanhesuan.Fossil_Fuel_Combustion
 
 /*
 保存用户
