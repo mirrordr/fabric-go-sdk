@@ -2,7 +2,7 @@ package tanhesuan
 
 import "reflect"
 
-func taoci(hushi *Fossil_Fuel_Combustion, taocizhuanyou *Ceramics_Indusry_Production_Process, dianli *Electricity_And_Heat_Emissions, diqu string) float64 {
+func taoci(huashi *Fossil_Fuel_Combustion, taocizhuanyou *Ceramics_Indusry_Production_Process, dianli *Electricity_And_Heat_Emissions) float64 {
 	model1 := &Fossil_Fuel_Combustion{
 		Anthracite:              23.2,
 		Bituminous_coal:         22.3,
@@ -59,7 +59,7 @@ func taoci(hushi *Fossil_Fuel_Combustion, taocizhuanyou *Ceramics_Indusry_Produc
 	}
 
 	var result float64
-	StructFieldMot(model1, model2, model3, hushi)
+	StructFieldMot(model1, model2, model3, huashi)
 	a1 := SumFossil(model1) * 44 / 12
 	a2 := SumEle(dianli)
 	a3 := taocizhuanyou.Material_weight * taocizhuanyou.Material_utilization_ratio * (44/100*taocizhuanyou.CaCO3_content + 44/84*taocizhuanyou.MgCO3_content)

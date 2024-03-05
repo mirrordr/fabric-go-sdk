@@ -7,22 +7,35 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"strconv"
+	"time"
 )
 
 type SimpleAsset struct {
 }
 
-var Huashi tanhesuan.Fossil_Fuel_Combustion
+type TanReport struct {
+	Huashi        tanhesuan.Fossil_Fuel_Combustion                         `json:"Huashi"`
+	Taocizhuanyou tanhesuan.Ceramics_Indusry_Production_Process            `json:"Taocizhuanyou"`
+	Dianli        tanhesuan.Electricity_And_Heat_Emissions                 `json:"Dianli"`
+	Ma            tanhesuan.Magnesium_smelting_Industry_Production_Process `json:"Ma"`
+	Time          time.Time                                                `json:"Time"`
+	Examine       Examine                                                  `json:"Examine"`
+}
 
 /*
 保存用户
 */
 type User struct {
-	Account     string      `json:"Account"`
-	CompanyInfo CompanyInfo `json:"CompanyInfo"`
-	Balance     int64       `json:"Balance"`
-	Type        string      `json:"Type"`
-	Examine     Examine     `json:"Examine"`
+	Account     string              `json:"Account"`
+	CompanyInfo CompanyInfo         `json:"CompanyInfo"`
+	Balance     float64             `json:"Balance"`
+	Examine     Examine             `json:"Examine"`
+	FromNumber  int64               `json:"FromNumber"`
+	ToNumber    int64               `json:"ToNumber"`
+	TanNumber   int64               `json:"TanNumber"`
+	FromTrade   map[string]Trade    `json:"FromTrade"`
+	ToTrade     map[string]Trade    `json:"ToTrade"`
+	TanReport   map[int64]TanReport `json:"TanReport"`
 }
 
 /*
@@ -72,10 +85,16 @@ type Contact struct {
 订单信息
 */
 type Trade struct {
-	TradeId     string `json:"TradeId"`
-	FromAccount string `json:"FromAccount"`
-	Volume      int64  `json:"Volume"`
-	Price       int64  `json:"Price"`
+	TradeId     string  `json:"TradeId"`
+	FromAccount string  `json:"FromAccount"`
+	ToAccount   string  `json:"ToAccount"`
+	Volume      float64 `json:"Volume"`
+	Price       float64 `json:"Price"`
+}
+
+type TradeMap struct {
+	Number int64            `json:"Number"`
+	Trade  map[string]Trade `json:"Trade"`
 }
 
 // Init /*区块链的初始化
@@ -102,6 +121,8 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return t.TradeDelete(stub, args)
 	case "transaction":
 		return t.Transaction(stub, args)
+	case "tanReportRegister":
+		return t.TanReportRegister(stub, args)
 
 	default:
 		return shim.Error("Unsupported function")
@@ -113,30 +134,28 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 创建一个account对应的User存储结构体并实现上链
 */
 func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 5 {
+	if len(args) != 3 {
 		return shim.Error("Incorrect number of args.Expecting 5")
 	}
 	acc := args[0]
-	bal := args[1]
-	nam := args[2]
-	typ := args[3]
-	own := args[4]
-	if acc == "" || bal == "" || nam == "" || typ == "" || own == "" {
+	info := args[1]
+	bal := args[2]
+	if acc == "" || bal == "" || info == "" {
 		return shim.Error("Invalid args.")
 	}
 	accountByes, err := stub.GetState(acc)
 	if err == nil && len(accountByes) != 0 {
 		return shim.Error("account already exists")
 	}
-	balance, _ := strconv.ParseInt(bal, 10, 64)
-	company := CompanyInfo{
-		Name:  nam,
-		Type:  typ,
-		Owner: own,
+	balance, _ := strconv.ParseFloat(bal, 10)
+	var companyInfo CompanyInfo
+	err = json.Unmarshal([]byte(info), &companyInfo)
+	if err != nil {
+		return shim.Error("can't change")
 	}
 	user := User{
 		Account:     acc,
-		CompanyInfo: company,
+		CompanyInfo: companyInfo,
 		Balance:     balance,
 	}
 	userByes, err := json.Marshal(user)
@@ -182,6 +201,7 @@ func (t *SimpleAsset) UserDelete(stub shim.ChaincodeStubInterface, args []string
 创建一个tradeid对应的Trade存储结构体并实现上链
 */
 func (t *SimpleAsset) TradeRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	var Trademap TradeMap
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of args.Expecting 4")
 	}
@@ -192,27 +212,56 @@ func (t *SimpleAsset) TradeRegister(stub shim.ChaincodeStubInterface, args []str
 	if id == "" || from == "" || vol == "" || pri == "" {
 		return shim.Error("Invalid args.")
 	}
-	tradeByes, err := stub.GetState(id)
-	if err != nil && len(tradeByes) != 0 {
+	tradeByes, err := stub.GetState("TradeMap")
+	if err != nil {
 		return shim.Error("Search error!!")
 	}
-	volume, _ := strconv.ParseInt(vol, 10, 64)
-	price, _ := strconv.ParseInt(pri, 10, 64)
+	if len(tradeByes) == 0 {
+		Trademap.Trade = make(map[string]Trade)
+	}
+	err = json.Unmarshal(tradeByes, &Trademap)
+	if err != nil {
+		return shim.Error("can't change")
+	}
+	fromByes, err := stub.GetState(from)
+	if err != nil && len(fromByes) == 0 {
+		return shim.Error("Search error or no from user!!")
+	}
+	var fromUser User
+	err = json.Unmarshal(fromByes, &fromUser)
+	if err != nil {
+		return shim.Error("can't change")
+	}
+	if fromUser.FromNumber == 0 {
+		fromUser.FromTrade = make(map[string]Trade)
+	}
+	volume, _ := strconv.ParseFloat(vol, 10)
+	price, _ := strconv.ParseFloat(pri, 10)
 	trade := Trade{
 		TradeId:     id,
 		FromAccount: from,
 		Volume:      volume,
 		Price:       price,
 	}
-	traByes, err := json.Marshal(trade)
+	fromUser.FromTrade[id] = trade
+	fromUser.FromNumber = fromUser.FromNumber + 1
+	Trademap.Trade[id] = trade
+	Trademap.Number = Trademap.Number + 1
+	traByes, err := json.Marshal(Trademap)
 	if err != nil {
 		return shim.Error("marshal user error")
 	}
-	if err = stub.PutState(id, traByes); err != nil {
+	if err = stub.PutState("TradeMap", traByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	froByes, err := json.Marshal(fromUser)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(from, froByes); err != nil {
 		return shim.Error("Failed to put state")
 	}
 	return shim.Success(nil)
-
 }
 
 /*
@@ -222,10 +271,22 @@ func (t *SimpleAsset) TradeQuery(stub shim.ChaincodeStubInterface, args []string
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
+	var Trademap TradeMap
 	id := args[0]
-	idBytes, err := stub.GetState(id)
+	TradeBytes, err := stub.GetState("TradeMap")
 	if err != nil {
 		return shim.Error("Failed to get state")
+	}
+	if len(TradeBytes) == 0 {
+		return shim.Error("Wrong !!")
+	}
+	err = json.Unmarshal(TradeBytes, &Trademap)
+	if err != nil {
+		return shim.Error("can't change")
+	}
+	idBytes, err := json.Marshal(Trademap.Trade[id])
+	if err != nil {
+		return shim.Error("error!")
 	}
 	return shim.Success(idBytes)
 }
@@ -238,9 +299,27 @@ func (t *SimpleAsset) TradeDelete(stub shim.ChaincodeStubInterface, args []strin
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
+	var Trademap TradeMap
 	id := args[0]
-	if err := stub.DelState(id); err != nil {
-		return shim.Error("Failed to delete companyViewRecordMap")
+	TradeBytes, err := stub.GetState("TradeMap")
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	if len(TradeBytes) == 0 {
+		return shim.Error("Wrong !!")
+	}
+	err = json.Unmarshal(TradeBytes, &Trademap)
+	if err != nil {
+		return shim.Error("can't change")
+	}
+	delete(Trademap.Trade, id)
+	Trademap.Number = Trademap.Number - 1
+	traByes, err := json.Marshal(Trademap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("TradeMap", traByes); err != nil {
+		return shim.Error("Failed to put state")
 	}
 	return shim.Success(nil)
 }
@@ -249,11 +328,20 @@ func (t *SimpleAsset) TradeDelete(stub shim.ChaincodeStubInterface, args []strin
 执行交易from->to
 */
 func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []string) peer.Response { //执行资金的密态转移
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of args.Expecting 3")
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of args.Expecting 5")
 	}
-	userFrom, userTo, bal := args[0], args[1], args[2]
-	existFrom, err := stub.GetState(userFrom)
+	var from, to User
+	var Trademap TradeMap
+	id, userTo := args[0], args[1]
+	tradeByes, err := stub.GetState("TradeMap")
+	if err != nil {
+		return shim.Error("Failed to get tradeMap state")
+	}
+	if err = json.Unmarshal(tradeByes, &Trademap); err != nil {
+		return shim.Error("Failed to unmarshal userFrom")
+	}
+	existFrom, err := stub.GetState(Trademap.Trade[id].FromAccount)
 	if err == nil && len(existFrom) == 0 {
 		return shim.Error("sender does not exist")
 	}
@@ -261,12 +349,13 @@ func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []strin
 	if err == nil && len(existTo) == 0 {
 		return shim.Error("receiver does not exist")
 	}
-	var from, to User
-	if userFrom == "" || userTo == "" || bal == "" {
+
+	if id == "" || userTo == "" {
 		return shim.Error("Invalid args")
 	}
-	balance, _ := strconv.ParseInt(bal, 10, 64)
-	userFromBytes, err := stub.GetState(userFrom)
+	price := Trademap.Trade[id].Price
+	volume := Trademap.Trade[id].Volume
+	userFromBytes, err := stub.GetState(Trademap.Trade[id].FromAccount)
 	if err != nil {
 		return shim.Error("Failed to get userFrom state")
 	}
@@ -280,8 +369,28 @@ func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []strin
 	if err = json.Unmarshal(userToByes, &to); err != nil {
 		return shim.Error("Failed to unmarshal userFrom")
 	}
-	from.Balance = from.Balance - balance
-	to.Balance = to.Balance + balance
+
+	from.Balance = from.Balance - price*volume
+	to.Balance = to.Balance + price*volume
+	if from.FromNumber == 0 {
+		from.FromTrade = make(map[string]Trade)
+	}
+	if to.ToNumber == 0 {
+		to.ToTrade = make(map[string]Trade)
+	}
+	Trademap.Trade[id] = Trade{
+		TradeId:     Trademap.Trade[id].TradeId,
+		FromAccount: Trademap.Trade[id].FromAccount,
+		ToAccount:   userTo,
+		Price:       Trademap.Trade[id].Price,
+		Volume:      Trademap.Trade[id].Volume,
+	}
+	from.FromTrade[id] = Trademap.Trade[id]
+	from.FromNumber = from.FromNumber + 1
+	to.ToTrade[id] = Trademap.Trade[id]
+	to.ToNumber = to.ToNumber + 1
+	delete(Trademap.Trade, id)
+	Trademap.Number = Trademap.Number - 1
 	newFrom, err := json.Marshal(from)
 	if err != nil {
 		return shim.Error("marshal user error")
@@ -294,6 +403,51 @@ func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []strin
 		return shim.Error("Failed to put state")
 	}
 	if err = stub.PutState(to.Account, newTo); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	traByes, err := json.Marshal(Trademap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("TradeMap", traByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+}
+
+/*
+添加碳报告
+*/
+func (t *SimpleAsset) TanReportRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of args.Expecting 1")
+	}
+	acc := args[0]
+	tanReport := args[1]
+	idBytes, err := stub.GetState(acc)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var user User
+	err = json.Unmarshal(idBytes, &user)
+	if user.TanNumber == 0 {
+		user.TanReport = make(map[int64]TanReport)
+	}
+	if err != nil {
+		return shim.Error("Error 2 !!")
+	}
+	var Tanreport TanReport
+	err = json.Unmarshal([]byte(tanReport), &Tanreport)
+	if err != nil {
+		return shim.Error("Error 3 !!")
+	}
+	user.TanReport[user.TanNumber] = Tanreport
+	user.TanNumber = user.TanNumber + 1
+	newUser, err := json.Marshal(user)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(user.Account, newUser); err != nil {
 		return shim.Error("Failed to put state")
 	}
 	return shim.Success(nil)

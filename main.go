@@ -88,11 +88,9 @@ func main() {
 	r := gin.Default()
 	r.GET("/userRegister", func(c *gin.Context) {
 		acc := c.Query("Account")
+		cominfo := c.Query("CompanyInfo")
 		bal := c.Query("Balance")
-		nam := c.Query("Name")
-		typ := c.Query("Type")
-		own := c.Query("Owner")
-		a := []string{"UserRegister", acc, bal, nam, typ, own}
+		a := []string{"UserRegister", acc, cominfo, bal}
 		response, err := App.UserRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -184,11 +182,26 @@ func main() {
 		}
 	})
 	r.GET("/transaction", func(c *gin.Context) {
-		from := c.Query("From")
+		id := c.Query("TradeID")
 		to := c.Query("To")
-		bal := c.Query("Balance")
-		a := []string{"Transaction", from, to, bal}
+		a := []string{"Transaction", id, to}
 		response, err := App.Transaction(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"result": err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"result": response,
+				"final":  "success",
+			})
+		}
+	})
+	r.GET("/tanReportRegister", func(c *gin.Context) {
+		acc := c.Query("Account")
+		tanReport := c.Query("TanReport")
+		a := []string{"TanReportRegister", acc, tanReport}
+		response, err := App.TanReportRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"result": err,
