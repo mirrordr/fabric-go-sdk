@@ -14,28 +14,28 @@ type SimpleAsset struct {
 }
 
 type TanReport struct {
-	Huashi        tanhesuan.Fossil_Fuel_Combustion                         `json:"Huashi"`
-	Taocizhuanyou tanhesuan.Ceramics_Indusry_Production_Process            `json:"Taocizhuanyou"`
-	Dianli        tanhesuan.Electricity_And_Heat_Emissions                 `json:"Dianli"`
-	Ma            tanhesuan.Magnesium_smelting_Industry_Production_Process `json:"Ma"`
-	Time          time.Time                                                `json:"Time"`
-	Examine       Examine                                                  `json:"Examine"`
+	Huashi        tanhesuan.Fossil_Fuel_Combustion                         `json:"Huashi"`        //化石燃料信息
+	Taocizhuanyou tanhesuan.Ceramics_Indusry_Production_Process            `json:"Taocizhuanyou"` //陶瓷企业的专有信息
+	Dianli        tanhesuan.Electricity_And_Heat_Emissions                 `json:"Dianli"`        //电力热力信息
+	Ma            tanhesuan.Magnesium_smelting_Industry_Production_Process `json:"Ma"`            //镁工业特有
+	Time          time.Time                                                `json:"Time"`          //提交时间
+	Examine       Examine                                                  `json:"Examine"`       //监管签名，只有签名了的才可以用于碳币的生成和交易等
 }
 
 /*
 保存用户
 */
 type User struct {
-	Account     string              `json:"Account"`
-	CompanyInfo CompanyInfo         `json:"CompanyInfo"`
-	Balance     float64             `json:"Balance"`
-	Examine     Examine             `json:"Examine"`
-	FromNumber  int64               `json:"FromNumber"`
-	ToNumber    int64               `json:"ToNumber"`
-	TanNumber   int64               `json:"TanNumber"`
-	FromTrade   map[string]Trade    `json:"FromTrade"`
-	ToTrade     map[string]Trade    `json:"ToTrade"`
-	TanReport   map[int64]TanReport `json:"TanReport"`
+	Account     string              `json:"Account"`     //用户的账号+账号密码的hash
+	CompanyInfo CompanyInfo         `json:"CompanyInfo"` //公司信息
+	Balance     float64             `json:"Balance"`     //用户余额
+	Examine     Examine             `json:"Examine"`     //审核签名（如果这栏为空代表没有审核显示没有审核通过）
+	FromNumber  int64               `json:"FromNumber"`  //发起交易的数量
+	ToNumber    int64               `json:"ToNumber"`    //选择交易的数量
+	TanNumber   int64               `json:"TanNumber"`   //上传碳报告的数量
+	FromTrade   map[string]Trade    `json:"FromTrade"`   //发起交易的交易信息
+	ToTrade     map[string]Trade    `json:"ToTrade"`     //选择交易的交易信息
+	TanReport   map[int64]TanReport `json:"TanReport"`   //谈报告的具体信息
 }
 
 /*
@@ -85,16 +85,16 @@ type Contact struct {
 订单信息
 */
 type Trade struct {
-	TradeId     string  `json:"TradeId"`
-	FromAccount string  `json:"FromAccount"`
-	ToAccount   string  `json:"ToAccount"`
-	Volume      float64 `json:"Volume"`
-	Price       float64 `json:"Price"`
+	TradeId     string  `json:"TradeId"`     //ID
+	FromAccount string  `json:"FromAccount"` //From
+	ToAccount   string  `json:"ToAccount"`   //To
+	Volume      float64 `json:"Volume"`      //交易量
+	Price       float64 `json:"Price"`       //交易单价
 }
 
 type TradeMap struct {
-	Number int64            `json:"Number"`
-	Trade  map[string]Trade `json:"Trade"`
+	Number int64            `json:"Number"` //总共的提出交易的数量
+	Trade  map[string]Trade `json:"Trade"`  //请求交易的Map
 }
 
 // Init /*区块链的初始化
@@ -441,6 +441,8 @@ func (t *SimpleAsset) TanReportRegister(stub shim.ChaincodeStubInterface, args [
 	if err != nil {
 		return shim.Error("Error 3 !!")
 	}
+	Time := time.Now()
+	Tanreport.Time = Time
 	user.TanReport[user.TanNumber] = Tanreport
 	user.TanNumber = user.TanNumber + 1
 	newUser, err := json.Marshal(user)
