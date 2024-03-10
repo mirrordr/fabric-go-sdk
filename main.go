@@ -97,6 +97,9 @@ func main() {
 				"status":  "failed",
 				"message": "用户注册失败",
 				"data":    err,
+				"test1":   acc,
+				"test2":   cominfo,
+				"test3":   bal,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
@@ -112,12 +115,15 @@ func main() {
 		response, err := App.UserQuery(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "用户查询失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "用户查询成功",
+				"data":    response,
 			})
 		}
 	})
@@ -127,12 +133,15 @@ func main() {
 		response, err := App.UserDelete(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "用户删除失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "用户删除成功",
+				"data":    response,
 			})
 		}
 	})
@@ -145,12 +154,15 @@ func main() {
 		response, err := App.TradeRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "交易上传失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "交易上传成功",
+				"data":    response,
 			})
 		}
 	})
@@ -160,12 +172,15 @@ func main() {
 		response, err := App.TradeQuery(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "交易查询失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "交易查询成功",
+				"data":    response,
 			})
 		}
 	})
@@ -175,12 +190,15 @@ func main() {
 		response, err := App.TradeDelete(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "交易删除失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "交易删除成功",
+				"data":    response,
 			})
 		}
 	})
@@ -191,12 +209,15 @@ func main() {
 		response, err := App.Transaction(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "交易失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "交易达成",
+				"data":    response,
 			})
 		}
 	})
@@ -207,12 +228,15 @@ func main() {
 		response, err := App.TanReportRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "碳报告上传失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "碳报告上传成功",
+				"data":    response,
 			})
 		}
 	})

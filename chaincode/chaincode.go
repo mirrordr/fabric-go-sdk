@@ -100,6 +100,34 @@ type TradeMap struct {
 
 // Init /*区块链的初始化
 func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
+	test1 := User{
+		Account: "test1",
+		CompanyInfo: CompanyInfo{
+			Name: "test1Company",
+		},
+		Balance: 100,
+	}
+	test1Byes, err := json.Marshal(test1)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(test1.Account, test1Byes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	test2 := User{
+		Account: "test2",
+		CompanyInfo: CompanyInfo{
+			Name: "test2Company",
+		},
+		Balance: 100,
+	}
+	test2Byes, err := json.Marshal(test2)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(test2.Account, test2Byes); err != nil {
+		return shim.Error("Failed to put state")
+	}
 	fmt.Printf("init...")
 	return shim.Success(nil)
 }
