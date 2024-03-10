@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -138,8 +139,9 @@ func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []stri
 		return shim.Error("Incorrect number of args.Expecting 5")
 	}
 	acc := args[0]
-	info := args[1]
+	info1 := args[1]
 	bal := args[2]
+	info := strings.Replace(info1, "%22", `"`, -1)
 	if acc == "" || bal == "" || info == "" {
 		return shim.Error("Invalid args.")
 	}

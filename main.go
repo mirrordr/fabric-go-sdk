@@ -94,12 +94,15 @@ func main() {
 		response, err := App.UserRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"result": err,
+				"status":  "failed",
+				"message": "用户注册失败",
+				"data":    err,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"result": response,
-				"final":  "success",
+				"status":  "success",
+				"message": "用户注册成功，等待管理员审核",
+				"data":    response,
 			})
 		}
 	})
