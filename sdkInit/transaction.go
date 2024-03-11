@@ -1,6 +1,7 @@
 package sdkInit
 
 import (
+	"fmt"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
 )
 
@@ -12,6 +13,7 @@ func (t *Application) Transaction(args []string) (string, error) {
 
 	request := channel.Request{ChaincodeID: t.SdkEnvInfo.ChaincodeID, Fcn: args[0], Args: [][]byte{[]byte(args[1]), []byte(args[2])}}
 	response, err := t.SdkEnvInfo.ChClient.Execute(request)
+	fmt.Println(err)
 	if err != nil {
 		return "", err
 	}

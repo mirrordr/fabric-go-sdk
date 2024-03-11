@@ -128,6 +128,17 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	if err = stub.PutState(test2.Account, test2Byes); err != nil {
 		return shim.Error("Failed to put state")
 	}
+	tradeMap := TradeMap{
+		Number: 0,
+		Trade:  make(map[string]Trade),
+	}
+	tradeByes, err := json.Marshal(tradeMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("TradeMap", tradeByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
 	fmt.Printf("init...")
 	return shim.Success(nil)
 }
@@ -169,12 +180,13 @@ func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []stri
 	acc := args[0]
 	info1 := args[1]
 	bal := args[2]
-	info := strings.Replace(info1, "%22", `"`, -1)
+	info := strings.Replace(info1, "\\", "", -1)
+	fmt.Println(info1)
 	if acc == "" || bal == "" || info == "" {
 		return shim.Error("Invalid args.")
 	}
 	accountByes, err := stub.GetState(acc)
-	if err == nil && len(accountByes) != 0 {
+	if err == nil && len(accountByes) == 0 {
 		return shim.Error("account already exists")
 	}
 	balance, _ := strconv.ParseFloat(bal, 10)
@@ -246,12 +258,9 @@ func (t *SimpleAsset) TradeRegister(stub shim.ChaincodeStubInterface, args []str
 	if err != nil {
 		return shim.Error("Search error!!")
 	}
-	if len(tradeByes) == 0 {
-		Trademap.Trade = make(map[string]Trade)
-	}
 	err = json.Unmarshal(tradeByes, &Trademap)
 	if err != nil {
-		return shim.Error("can't change")
+		return shim.Error("can't change 1")
 	}
 	fromByes, err := stub.GetState(from)
 	if err != nil && len(fromByes) == 0 {
@@ -260,7 +269,7 @@ func (t *SimpleAsset) TradeRegister(stub shim.ChaincodeStubInterface, args []str
 	var fromUser User
 	err = json.Unmarshal(fromByes, &fromUser)
 	if err != nil {
-		return shim.Error("can't change")
+		return shim.Error("can't change 2")
 	}
 	if fromUser.FromNumber == 0 {
 		fromUser.FromTrade = make(map[string]Trade)

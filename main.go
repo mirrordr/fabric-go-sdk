@@ -90,8 +90,9 @@ func main() {
 		acc := c.Query("Account")
 		cominfo := c.Query("CompanyInfo")
 		bal := c.Query("Balance")
-		a := []string{"UserRegister", acc, cominfo, bal}
+		a := []string{"userRegister", acc, cominfo, bal}
 		response, err := App.UserRegister(a)
+		fmt.Println(cominfo)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "failed",
@@ -111,7 +112,7 @@ func main() {
 	})
 	r.GET("/userQuery", func(c *gin.Context) {
 		acc := c.Query("Account")
-		a := []string{"UserQuery", acc}
+		a := []string{"userQuery", acc}
 		response, err := App.UserQuery(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -129,7 +130,7 @@ func main() {
 	})
 	r.GET("/UserDelete", func(c *gin.Context) {
 		acc := c.Query("Account")
-		a := []string{"UserDelete", acc}
+		a := []string{"userDelete", acc}
 		response, err := App.UserDelete(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -150,13 +151,17 @@ func main() {
 		from := c.Query("From")
 		vol := c.Query("Volume")
 		pri := c.Query("Price")
-		a := []string{"TradeRegister", id, from, vol, pri}
+		a := []string{"tradeRegister", id, from, vol, pri}
 		response, err := App.TradeRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "failed",
 				"message": "交易上传失败",
 				"data":    err,
+				"test1":   id,
+				"test2":   from,
+				"test3":   vol,
+				"test4":   pri,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
@@ -168,7 +173,7 @@ func main() {
 	})
 	r.GET("/tradeQuery", func(c *gin.Context) {
 		id := c.Query("ID")
-		a := []string{"TradeQuery", id}
+		a := []string{"tradeQuery", id}
 		response, err := App.TradeQuery(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -186,7 +191,7 @@ func main() {
 	})
 	r.GET("/tradeDelete", func(c *gin.Context) {
 		id := c.Query("ID")
-		a := []string{"TradeDelete", id}
+		a := []string{"tradeDelete", id}
 		response, err := App.TradeDelete(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -205,13 +210,15 @@ func main() {
 	r.GET("/transaction", func(c *gin.Context) {
 		id := c.Query("TradeID")
 		to := c.Query("To")
-		a := []string{"Transaction", id, to}
+		a := []string{"transaction", id, to}
 		response, err := App.Transaction(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "failed",
 				"message": "交易失败",
 				"data":    err,
+				"test1":   id,
+				"test2":   to,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
@@ -224,13 +231,15 @@ func main() {
 	r.GET("/tanReportRegister", func(c *gin.Context) {
 		acc := c.Query("Account")
 		tanReport := c.Query("TanReport")
-		a := []string{"TanReportRegister", acc, tanReport}
+		a := []string{"tanReportRegister", acc, tanReport}
 		response, err := App.TanReportRegister(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "failed",
 				"message": "碳报告上传失败",
 				"data":    err,
+				"test1":   acc,
+				"test2":   tanReport,
 			})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
