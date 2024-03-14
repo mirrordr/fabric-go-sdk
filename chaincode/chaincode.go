@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-protos-go/peer"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +21,22 @@ type TanReport struct {
 	Dianli        tanhesuan.Electricity_And_Heat_Emissions                 `json:"Dianli"`        //电力热力信息
 	Ma            tanhesuan.Magnesium_smelting_Industry_Production_Process `json:"Ma"`            //镁工业特有
 	Time          time.Time                                                `json:"Time"`          //提交时间
+	Final         float64                                                  `json:"Final"`         //最终结果
+	Type          string                                                   `json:"Type"`          //碳报告类型
 	Examine       Examine                                                  `json:"Examine"`       //监管签名，只有签名了的才可以用于碳币的生成和交易等
+}
+
+type TaociHeyunsuan struct {
+	Huashimodel1 tanhesuan.Fossil_Fuel_Combustion `json:"Huashimodel1"`
+	Huashimodel2 tanhesuan.Fossil_Fuel_Combustion `json:"Huashimodel2"`
+	Huashimodel3 tanhesuan.Fossil_Fuel_Combustion `json:"Huashimodel3"`
+}
+
+type MgHeyunsuan struct {
+	Huashimodel1 tanhesuan.Fossil_Fuel_Combustion                         `json:"Huashimodel1"`
+	Huashimodel2 tanhesuan.Fossil_Fuel_Combustion                         `json:"Huashimodel2"`
+	Huashimodel3 tanhesuan.Fossil_Fuel_Combustion                         `json:"Huashimodel3"`
+	Mg           tanhesuan.Magnesium_smelting_Industry_Production_Process `json:"Mg"`
 }
 
 /*
@@ -30,6 +46,7 @@ type User struct {
 	Account     string              `json:"Account"`     //用户的账号+账号密码的hash
 	CompanyInfo CompanyInfo         `json:"CompanyInfo"` //公司信息
 	Balance     float64             `json:"Balance"`     //用户余额
+	Volume      float64             `json:"Volume"`      //公司碳额度
 	Examine     Examine             `json:"Examine"`     //审核签名（如果这栏为空代表没有审核显示没有审核通过）
 	FromNumber  int64               `json:"FromNumber"`  //发起交易的数量
 	ToNumber    int64               `json:"ToNumber"`    //选择交易的数量
@@ -98,6 +115,16 @@ type TradeMap struct {
 	Trade  map[string]Trade `json:"Trade"`  //请求交易的Map
 }
 
+type TanReportMap struct {
+	Number    int64                `json:"Number"`
+	TanReport map[string]TanReport `json:"TanReport"`
+}
+
+type Data_auditor struct {
+	ExaminePK *big.Int `json:"ExaminePK"`
+	ExamineSK *big.Int `json:"ExamineSK"`
+}
+
 // Init /*区块链的初始化
 func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	test1 := User{
@@ -139,6 +166,169 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	if err = stub.PutState("TradeMap", tradeByes); err != nil {
 		return shim.Error("Failed to put state")
 	}
+	Taocimodel1 := tanhesuan.Fossil_Fuel_Combustion{
+		Anthracite:              23.2,
+		Bituminous_coal:         22.3,
+		Brown_coal:              14.8,
+		Briquette:               17.5,
+		Coke:                    28.4,
+		Crude:                   41.8,
+		Gasoline:                43.1,
+		Diesel_fuel:             42.7,
+		General_kerosene:        43.1,
+		Fuel_oil:                41.8,
+		Coal_tar:                33.5,
+		Liquefied_natural_gas:   51.4,
+		Liquefied_petroleum_gas: 50.2,
+		Methane:                 389.3,
+		Water_gas:               10.4,
+		Coke_oven_gas:           173.5,
+	}
+	Taocimodel2 := tanhesuan.Fossil_Fuel_Combustion{
+		Anthracite:              27.8,
+		Bituminous_coal:         25.6,
+		Brown_coal:              27.8,
+		Briquette:               33.6,
+		Coke:                    28.8,
+		Crude:                   20.1,
+		Gasoline:                18.9,
+		Diesel_fuel:             20.2,
+		General_kerosene:        19.6,
+		Fuel_oil:                21,
+		Coal_tar:                22,
+		Liquefied_natural_gas:   15.3,
+		Liquefied_petroleum_gas: 17.2,
+		Methane:                 15.3,
+		Water_gas:               12.2,
+		Coke_oven_gas:           13.6,
+	}
+	Taocimodel3 := tanhesuan.Fossil_Fuel_Combustion{
+		Anthracite:              0.94,
+		Bituminous_coal:         0.93,
+		Brown_coal:              0.96,
+		Briquette:               0.9,
+		Coke:                    0.93,
+		Crude:                   0.98,
+		Gasoline:                0.98,
+		Diesel_fuel:             0.98,
+		General_kerosene:        0.98,
+		Fuel_oil:                0.98,
+		Coal_tar:                0.98,
+		Liquefied_natural_gas:   0.98,
+		Liquefied_petroleum_gas: 0.98,
+		Methane:                 0.99,
+		Water_gas:               0.99,
+		Coke_oven_gas:           0.99,
+	}
+	Taoci := TaociHeyunsuan{
+		Huashimodel1: Taocimodel1,
+		Huashimodel2: Taocimodel2,
+		Huashimodel3: Taocimodel3,
+	}
+	taociByes, err := json.Marshal(Taoci)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("Taoci", taociByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	mgmodel1 := tanhesuan.Fossil_Fuel_Combustion{
+		Anthracite:              20.304,
+		Bituminous_coal:         19.57,
+		Brown_coal:              14.08,
+		Clenedcoal:              26.344,
+		Pure_coke:               28.435,
+		Coke:                    28.447,
+		Crude:                   41.816,
+		Fuel_oil:                41.816,
+		Gasoline:                43.07,
+		Diesel_fuel:             42.652,
+		General_kerosene:        44.75,
+		Liquefied_natural_gas:   41.868,
+		Liquefied_petroleum_gas: 50.176,
+		Coal_tar:                33.453,
+		Coke_oven_gas:           173.54,
+		Blastfurnace_gas:        33,
+		Converter_gas:           84,
+		Producer_gas:            52.27,
+		Methane:                 389.31,
+		Semicoke_gas:            81,
+		Petroleum_products:      45.998,
+	}
+	mgmodel2 := tanhesuan.Fossil_Fuel_Combustion{
+		Anthracite:              27.49,
+		Bituminous_coal:         26.18,
+		Brown_coal:              28,
+		Clenedcoal:              25.4,
+		Pure_coke:               29.42,
+		Coke:                    29.5,
+		Crude:                   20.1,
+		Fuel_oil:                21.1,
+		Gasoline:                18.9,
+		Diesel_fuel:             20.2,
+		General_kerosene:        19.6,
+		Liquefied_natural_gas:   17.2,
+		Liquefied_petroleum_gas: 17.2,
+		Coal_tar:                22,
+		Coke_oven_gas:           12.1,
+		Blastfurnace_gas:        70.8,
+		Converter_gas:           49.6,
+		Producer_gas:            12.2,
+		Methane:                 15.3,
+		Semicoke_gas:            11.96,
+		Petroleum_products:      18.2,
+	}
+	mgmodel3 := tanhesuan.Fossil_Fuel_Combustion{
+		Anthracite:              0.94,
+		Bituminous_coal:         0.93,
+		Brown_coal:              0.96,
+		Clenedcoal:              0.9,
+		Pure_coke:               0.93,
+		Coke:                    0.93,
+		Crude:                   0.98,
+		Fuel_oil:                0.98,
+		Gasoline:                0.98,
+		Diesel_fuel:             0.98,
+		General_kerosene:        0.98,
+		Liquefied_natural_gas:   0.98,
+		Liquefied_petroleum_gas: 0.98,
+		Coal_tar:                0.98,
+		Coke_oven_gas:           0.99,
+		Blastfurnace_gas:        0.99,
+		Converter_gas:           0.99,
+		Producer_gas:            0.99,
+		Methane:                 0.99,
+		Semicoke_gas:            0.99,
+		Petroleum_products:      0.99,
+	}
+	mgmodel4 := tanhesuan.Magnesium_smelting_Industry_Production_Process{
+		Ferrosilicon_yield:   2.79,
+		Dolomite_consumption: 0.98,
+	}
+	mg := MgHeyunsuan{
+		Huashimodel1: mgmodel1,
+		Huashimodel2: mgmodel2,
+		Huashimodel3: mgmodel3,
+		Mg:           mgmodel4,
+	}
+	mgByes, err := json.Marshal(mg)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("Mg", mgByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	tanReportMap := TanReportMap{
+		Number:    0,
+		TanReport: make(map[string]TanReport),
+	}
+	tanmapByes, err := json.Marshal(tanReportMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("TanReportMap", tanmapByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
 	fmt.Printf("init...")
 	return shim.Success(nil)
 }
@@ -163,6 +353,12 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return t.Transaction(stub, args)
 	case "tanReportRegister":
 		return t.TanReportRegister(stub, args)
+	case "changeTaoci":
+		return t.ChangeTaoci(stub, args)
+	case "changeMg":
+		return t.ChangeMg(stub, args)
+	case "tanHesuan":
+		return t.TanHesuan(stub, args)
 
 	default:
 		return shim.Error("Unsupported function")
@@ -388,7 +584,6 @@ func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []strin
 	if err == nil && len(existTo) == 0 {
 		return shim.Error("receiver does not exist")
 	}
-
 	if id == "" || userTo == "" {
 		return shim.Error("Invalid args")
 	}
@@ -408,7 +603,6 @@ func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []strin
 	if err = json.Unmarshal(userToByes, &to); err != nil {
 		return shim.Error("Failed to unmarshal userFrom")
 	}
-
 	from.Balance = from.Balance - price*volume
 	to.Balance = to.Balance + price*volume
 	if from.FromNumber == 0 {
@@ -475,6 +669,12 @@ func (t *SimpleAsset) TanReportRegister(stub shim.ChaincodeStubInterface, args [
 	if err != nil {
 		return shim.Error("Error 2 !!")
 	}
+	var TanreportMap TanReportMap
+	mapBytes, err := stub.GetState("TanReportMap")
+	err = json.Unmarshal(mapBytes, &TanreportMap)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
 	var Tanreport TanReport
 	err = json.Unmarshal([]byte(tanReport), &Tanreport)
 	if err != nil {
@@ -482,13 +682,130 @@ func (t *SimpleAsset) TanReportRegister(stub shim.ChaincodeStubInterface, args [
 	}
 	Time := time.Now()
 	Tanreport.Time = Time
+	Tanreport.Type = user.CompanyInfo.Type
 	user.TanReport[user.TanNumber] = Tanreport
+	TanreportMap.Number = TanreportMap.Number + 1
+	if _, ok := TanreportMap.TanReport[user.Account]; ok {
+		return shim.Error("已经有未审核通过的碳核算报告")
+	}
+	TanreportMap.TanReport[user.Account] = Tanreport
 	user.TanNumber = user.TanNumber + 1
 	newUser, err := json.Marshal(user)
 	if err != nil {
 		return shim.Error("marshal user error")
 	}
 	if err = stub.PutState(user.Account, newUser); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	newTan, err := json.Marshal(TanreportMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("TanReportMap", newTan); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+}
+
+func (t *SimpleAsset) ChangeTaoci(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of args.Expecting 1")
+	}
+	taoci := args[0]
+	var newTaoci TaociHeyunsuan
+	err := json.Unmarshal([]byte(taoci), &newTaoci)
+	if err != nil {
+		return shim.Error("can't change 3")
+	}
+	taociByes, err := json.Marshal(newTaoci)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("Taoci", taociByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+}
+
+func (t *SimpleAsset) ChangeMg(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of args.Expecting 1")
+	}
+	mg := args[0]
+	var newmg MgHeyunsuan
+	err := json.Unmarshal([]byte(mg), &newmg)
+	if err != nil {
+		return shim.Error("can't change 3")
+	}
+	mgByes, err := json.Marshal(newmg)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("Mg", mgByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+}
+
+func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of args.Expecting 1")
+	}
+	acc := args[1]
+	var TanreportMap TanReportMap
+	mapBytes, err := stub.GetState("TanReportMap")
+	err = json.Unmarshal(mapBytes, &TanreportMap)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var Taoci TaociHeyunsuan
+	taociBytes, err := stub.GetState("Taoci")
+	err = json.Unmarshal(taociBytes, &Taoci)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var Mg MgHeyunsuan
+	mgBytes, err := stub.GetState("Mg")
+	err = json.Unmarshal(mgBytes, &Mg)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var report TanReport
+	report = TanreportMap.TanReport[acc]
+	switch report.Type {
+	case "Taoci":
+		report.Final = tanhesuan.Taoci(&report.Huashi, &report.Taocizhuanyou, &report.Dianli, Taoci.Huashimodel1, Taoci.Huashimodel2, Taoci.Huashimodel3)
+		break
+	case "Mg":
+		report.Final = tanhesuan.Mayanlian(&report.Huashi, &report.Ma, &report.Dianli, Mg.Huashimodel1, Mg.Huashimodel2, Mg.Huashimodel3, Mg.Mg)
+		break
+	default:
+		return shim.Error("No type")
+	}
+	idBytes, err := stub.GetState(acc)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var user User
+	err = json.Unmarshal(idBytes, &user)
+	if err != nil {
+		return shim.Error("Error 2 !!")
+	}
+	user.TanReport[user.TanNumber-1] = report
+	delete(TanreportMap.TanReport, user.Account)
+	TanreportMap.Number = TanreportMap.Number - 1
+	newUser, err := json.Marshal(user)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(user.Account, newUser); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	newTan, err := json.Marshal(TanreportMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("TanReportMap", newTan); err != nil {
 		return shim.Error("Failed to put state")
 	}
 	return shim.Success(nil)

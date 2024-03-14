@@ -249,5 +249,60 @@ func main() {
 			})
 		}
 	})
+
+	r.GET("/changeTaoci", func(c *gin.Context) {
+		taoci := c.Query("Taoci")
+		a := []string{"changeTaoci", taoci}
+		response, err := App.ChangeTaoci(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "failed",
+				"message": "陶瓷基值更改失败",
+				"data":    err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "陶瓷基值更改成功",
+				"data":    response,
+			})
+		}
+	})
+	r.GET("/changeMg", func(c *gin.Context) {
+		mg := c.Query("Mg")
+		a := []string{"changeMg", mg}
+		response, err := App.ChangeMg(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "failed",
+				"message": "镁基值更改失败",
+				"data":    err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "镁基值更改成功",
+				"data":    response,
+			})
+		}
+	})
+	r.GET("/tanHesuan", func(c *gin.Context) {
+		acc := c.Query("Account")
+		a := []string{"tanHesuan", acc}
+		response, err := App.TanHesuan(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "failed",
+				"message": "碳核算失败",
+				"data":    err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "碳核算成功",
+				"data":    response,
+			})
+		}
+	})
 	r.Run(":9090")
 }
