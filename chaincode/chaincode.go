@@ -382,7 +382,7 @@ func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []stri
 		return shim.Error("Invalid args.")
 	}
 	accountByes, err := stub.GetState(acc)
-	if err == nil && len(accountByes) == 0 {
+	if err == nil && len(accountByes) != 0 {
 		return shim.Error("account already exists")
 	}
 	balance, _ := strconv.ParseFloat(bal, 10)
