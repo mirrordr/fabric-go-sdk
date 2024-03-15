@@ -660,10 +660,10 @@ func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []strin
 	if to.Volume < volume {
 		return shim.Error("no volume")
 	}
-	from.Balance = from.Balance - price*volume
-	to.Balance = to.Balance + price*volume
-	from.Volume = from.Volume + volume
-	to.Volume = to.Volume - volume
+	from.Balance = from.Balance + price*volume
+	to.Balance = to.Balance - price*volume
+	from.Volume = from.Volume - volume
+	to.Volume = to.Volume + volume
 	if from.FromNumber == 0 {
 		from.FromTrade = make(map[string]Trade)
 	}
