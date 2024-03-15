@@ -43,17 +43,19 @@ type MgHeyunsuan struct {
 保存用户
 */
 type User struct {
-	Account     string              `json:"Account"`     //用户的账号+账号密码的hash
-	CompanyInfo CompanyInfo         `json:"CompanyInfo"` //公司信息
-	Balance     float64             `json:"Balance"`     //用户余额
-	Volume      float64             `json:"Volume"`      //公司碳额度
-	Examine     Examine             `json:"Examine"`     //审核签名（如果这栏为空代表没有审核显示没有审核通过）
-	FromNumber  int64               `json:"FromNumber"`  //发起交易的数量
-	ToNumber    int64               `json:"ToNumber"`    //选择交易的数量
-	TanNumber   int64               `json:"TanNumber"`   //上传碳报告的数量
-	FromTrade   map[string]Trade    `json:"FromTrade"`   //发起交易的交易信息
-	ToTrade     map[string]Trade    `json:"ToTrade"`     //选择交易的交易信息
-	TanReport   map[int64]TanReport `json:"TanReport"`   //谈报告的具体信息
+	Account       string              `json:"Account"`       //用户的账号+账号密码的hash
+	CompanyInfo   CompanyInfo         `json:"CompanyInfo"`   //公司信息
+	Balance       float64             `json:"Balance"`       //用户余额
+	Volume        float64             `json:"Volume"`        //公司碳额度
+	Examine       Examine             `json:"Examine"`       //审核签名（如果这栏为空代表没有审核显示没有审核通过）
+	FromNumber    int64               `json:"FromNumber"`    //发起交易的数量
+	ToNumber      int64               `json:"ToNumber"`      //选择交易的数量
+	TanNumber     int64               `json:"TanNumber"`     //上传碳报告的数量
+	ProceedNumber int64               `json:"ProceedNumber"` //诉讼数量
+	FromTrade     map[string]Trade    `json:"FromTrade"`     //发起交易的交易信息
+	ToTrade       map[string]Trade    `json:"ToTrade"`       //选择交易的交易信息
+	TanReport     map[int64]TanReport `json:"TanReport"`     //谈报告的具体信息
+	Proceed       map[string]Proceed  `json:"Proceed"`
 }
 
 /*
@@ -125,14 +127,34 @@ type Data_auditor struct {
 	ExamineSK *big.Int `json:"ExamineSK"`
 }
 
+type Proceed struct {
+	PrID  string `json:"PrID"`
+	ID    string `json:"TradeID"`
+	From  string `json:"From"`
+	To    string `json:"To"`
+	Final string `json:"Final"`
+}
+
+type ProceedMap struct {
+	Number  int64              `json:"Number"`
+	Proceed map[string]Proceed `json:"Proceed"`
+}
+
+type ED struct {
+	Taoci float64 `json:"Taoci"`
+	Mg    float64 `json:"Mg"`
+}
+
 // Init /*区块链的初始化
 func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	test1 := User{
 		Account: "test1",
 		CompanyInfo: CompanyInfo{
 			Name: "test1Company",
+			Type: "陶瓷",
 		},
 		Balance: 100,
+		Volume:  100,
 	}
 	test1Byes, err := json.Marshal(test1)
 	if err != nil {
@@ -145,8 +167,10 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		Account: "test2",
 		CompanyInfo: CompanyInfo{
 			Name: "test2Company",
+			Type: "镁",
 		},
 		Balance: 100,
+		Volume:  100,
 	}
 	test2Byes, err := json.Marshal(test2)
 	if err != nil {
@@ -329,6 +353,28 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	if err = stub.PutState("TanReportMap", tanmapByes); err != nil {
 		return shim.Error("Failed to put state")
 	}
+	proceedMap := ProceedMap{
+		Number:  0,
+		Proceed: make(map[string]Proceed),
+	}
+	promapByes, err := json.Marshal(proceedMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("ProceedMap", promapByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	ed := ED{
+		Taoci: 500,
+		Mg:    500,
+	}
+	edByes, err := json.Marshal(ed)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("ED", edByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
 	fmt.Printf("init...")
 	return shim.Success(nil)
 }
@@ -359,6 +405,10 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return t.ChangeMg(stub, args)
 	case "tanHesuan":
 		return t.TanHesuan(stub, args)
+	case "proceedRegister":
+		return t.ProceedRegister(stub, args)
+	case "proceed":
+		return t.Proceed(stub, args)
 
 	default:
 		return shim.Error("Unsupported function")
@@ -395,6 +445,7 @@ func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []stri
 		Account:     acc,
 		CompanyInfo: companyInfo,
 		Balance:     balance,
+		Volume:      100,
 	}
 	userByes, err := json.Marshal(user)
 	if err != nil {
@@ -603,8 +654,16 @@ func (t *SimpleAsset) Transaction(stub shim.ChaincodeStubInterface, args []strin
 	if err = json.Unmarshal(userToByes, &to); err != nil {
 		return shim.Error("Failed to unmarshal userFrom")
 	}
+	if from.Balance < price*volume {
+		return shim.Error("no balance")
+	}
+	if to.Volume < volume {
+		return shim.Error("no volume")
+	}
 	from.Balance = from.Balance - price*volume
 	to.Balance = to.Balance + price*volume
+	from.Volume = from.Volume + volume
+	to.Volume = to.Volume - volume
 	if from.FromNumber == 0 {
 		from.FromTrade = make(map[string]Trade)
 	}
@@ -764,6 +823,12 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
+	var ed ED
+	edBytes, err := stub.GetState("ED")
+	err = json.Unmarshal(edBytes, &ed)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
 	var Mg MgHeyunsuan
 	mgBytes, err := stub.GetState("Mg")
 	err = json.Unmarshal(mgBytes, &Mg)
@@ -771,12 +836,18 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 		return shim.Error("Failed to get state")
 	}
 	var report TanReport
+	var edd float64
 	report = TanreportMap.TanReport[acc]
+	if report.Type == "陶瓷" {
+		edd = ed.Taoci
+	} else {
+		edd = ed.Mg
+	}
 	switch report.Type {
-	case "Taoci":
+	case "陶瓷":
 		report.Final = tanhesuan.Taoci(&report.Huashi, &report.Taocizhuanyou, &report.Dianli, Taoci.Huashimodel1, Taoci.Huashimodel2, Taoci.Huashimodel3)
 		break
-	case "Mg":
+	case "镁":
 		report.Final = tanhesuan.Mayanlian(&report.Huashi, &report.Ma, &report.Dianli, Mg.Huashimodel1, Mg.Huashimodel2, Mg.Huashimodel3, Mg.Mg)
 		break
 	default:
@@ -792,6 +863,7 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 		return shim.Error("Error 2 !!")
 	}
 	user.TanReport[user.TanNumber-1] = report
+	user.Volume = user.Volume + edd - report.Final
 	delete(TanreportMap.TanReport, user.Account)
 	TanreportMap.Number = TanreportMap.Number - 1
 	newUser, err := json.Marshal(user)
@@ -811,6 +883,136 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	return shim.Success(nil)
 }
 
+func (t *SimpleAsset) ProceedRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of args.Expecting 3")
+	}
+	prid := args[0]
+	id := args[1]
+	userfrom := args[2]
+	userto := args[3]
+	var from, to User
+	userFromBytes, err := stub.GetState(userfrom)
+	if err != nil {
+		return shim.Error("Failed to get userFrom state")
+	}
+	if err = json.Unmarshal(userFromBytes, &from); err != nil {
+		return shim.Error("Failed to unmarshal userFrom")
+	}
+	userToByes, err := stub.GetState(userto)
+	if err != nil {
+		return shim.Error("Failed to get userFrom state")
+	}
+	if err = json.Unmarshal(userToByes, &to); err != nil {
+		return shim.Error("Failed to unmarshal userFrom")
+	}
+	var proceed Proceed
+	proceed = Proceed{
+		PrID: prid,
+		ID:   id,
+		From: userfrom,
+		To:   userto,
+	}
+	var proceedMap ProceedMap
+	proBytes, err := stub.GetState("ProceedMap")
+	err = json.Unmarshal(proBytes, &proceedMap)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	proceedMap.Proceed[prid] = proceed
+	proceedMap.Number = proceedMap.Number + 1
+	from.Proceed[prid] = proceed
+	from.ProceedNumber = from.ProceedNumber + 1
+	to.Proceed[prid] = proceed
+	to.ProceedNumber = to.ProceedNumber + 1
+	newFrom, err := json.Marshal(from)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	newTo, err := json.Marshal(to)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(from.Account, newFrom); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	if err = stub.PutState(to.Account, newTo); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	promapByes, err := json.Marshal(proceedMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("ProceedMap", promapByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+}
+
+func (t *SimpleAsset) Proceed(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of args.Expecting 3")
+	}
+	prid := args[0]
+	fin := args[1]
+	var proceedMap ProceedMap
+	proBytes, err := stub.GetState("ProceedMap")
+	err = json.Unmarshal(proBytes, &proceedMap)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var proceed, newproceed Proceed
+	proceed = proceedMap.Proceed[prid]
+	var from, to User
+	userFromBytes, err := stub.GetState(proceed.From)
+	if err != nil {
+		return shim.Error("Failed to get userFrom state")
+	}
+	if err = json.Unmarshal(userFromBytes, &from); err != nil {
+		return shim.Error("Failed to unmarshal userFrom")
+	}
+	userToByes, err := stub.GetState(proceed.To)
+	if err != nil {
+		return shim.Error("Failed to get userFrom state")
+	}
+	if err = json.Unmarshal(userToByes, &to); err != nil {
+		return shim.Error("Failed to unmarshal userFrom")
+	}
+	newproceed = Proceed{
+		PrID:  prid,
+		ID:    proceed.ID,
+		From:  proceed.From,
+		To:    proceed.To,
+		Final: fin,
+	}
+	delete(proceedMap.Proceed, prid)
+	proceedMap.Number = proceedMap.Number - 1
+	from.Proceed[prid] = newproceed
+	to.Proceed[prid] = newproceed
+	newFrom, err := json.Marshal(from)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	newTo, err := json.Marshal(to)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(from.Account, newFrom); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	if err = stub.PutState(to.Account, newTo); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	promapByes, err := json.Marshal(proceedMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("ProceedMap", promapByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+
+}
 func main() {
 	if err := shim.Start(new(SimpleAsset)); err != nil {
 		fmt.Printf("Error starting SimpleAsset chaincode: %s", err)

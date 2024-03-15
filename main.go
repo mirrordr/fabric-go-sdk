@@ -304,5 +304,52 @@ func main() {
 			})
 		}
 	})
+	r.GET("/proceedRegister", func(c *gin.Context) {
+		pid := c.Query("PrID")
+		tid := c.Query("TradeID")
+		from := c.Query("From")
+		to := c.Query("To")
+		a := []string{"proceedRegister", pid, tid, from, to}
+		response, err := App.ProceedRegister(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "failed",
+				"message": "诉讼上传失败",
+				"data":    err,
+				"test1":   pid,
+				"test2":   tid,
+				"test3":   from,
+				"test4":   to,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "诉讼上传成功",
+				"data":    response,
+			})
+		}
+	})
+	r.GET("/proceed", func(c *gin.Context) {
+		pid := c.Query("PrID")
+		fin := c.Query("Final")
+		a := []string{"proceed", pid, fin}
+		response, err := App.Proceed(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "failed",
+				"message": "诉讼上传失败",
+				"data":    err,
+				"test1":   pid,
+				"test2":   fin,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "诉讼上传成功",
+				"data":    response,
+			})
+		}
+	})
+
 	r.Run(":9090")
 }
