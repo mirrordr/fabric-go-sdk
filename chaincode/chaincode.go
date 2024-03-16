@@ -810,76 +810,51 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
-	acc := args[1]
-	/*
-		var TanreportMap TanReportMap
-		mapBytes, err := stub.GetState("TanReportMap")
-		err = json.Unmarshal(mapBytes, &TanreportMap)
-		if err != nil {
-			return shim.Error("Failed to get state")
-		}
-
-	*/
-	/*var Taoci TaociHeyunsuan
+	acc := args[0]
+	var TanreportMap TanReportMap
+	mapBytes, err := stub.GetState("TanReportMap")
+	err = json.Unmarshal(mapBytes, &TanreportMap)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var Taoci TaociHeyunsuan
 	taociBytes, err := stub.GetState("Taoci")
 	err = json.Unmarshal(taociBytes, &Taoci)
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
-
-	*/
-	/*var ed ED
+	var ed ED
 	edBytes, err := stub.GetState("ED")
 	err = json.Unmarshal(edBytes, &ed)
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
 
-	*/
-	/*
-		var Mg MgHeyunsuan
-		mgBytes, err := stub.GetState("Mg")
-		err = json.Unmarshal(mgBytes, &Mg)
-		if err != nil {
-			return shim.Error("Failed to get state")
-		}
-
-	*/
-	/*var edd float64
+	var Mg MgHeyunsuan
+	mgBytes, err := stub.GetState("Mg")
+	err = json.Unmarshal(mgBytes, &Mg)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var report TanReport
+	var edd float64
 	if TanreportMap.TanReport[acc].Type == "陶瓷" {
 		edd = ed.Taoci
 	} else {
 		edd = ed.Mg
 	}
-
-	*/
-	/*
-		switch report.Type {
-		case "陶瓷":
-			report.Final = tanhesuan.Taoci(&report.Huashi, &report.Taocizhuanyou, &report.Dianli, Taoci.Huashimodel1, Taoci.Huashimodel2, Taoci.Huashimodel3)
-			break
-		case "镁":
-			report.Final = tanhesuan.Mayanlian(&report.Huashi, &report.Ma, &report.Dianli, Mg.Huashimodel1, Mg.Huashimodel2, Mg.Huashimodel3, Mg.Mg)
-			break
-		default:
-			return shim.Error("No type")
-		}
-
-	*/
-	/*var report TanReport
-	report = TanReport{
-		Huashi:        TanreportMap.TanReport[acc].Huashi,
-		Taocizhuanyou: TanreportMap.TanReport[acc].Taocizhuanyou,
-		Dianli:        TanreportMap.TanReport[acc].Dianli,
-		Ma:            TanreportMap.TanReport[acc].Ma,
-		Time:          TanreportMap.TanReport[acc].Time,
-		Final:         10.12,
-		Type:          "陶瓷",
-		Examine:       Examine{},
+	report = TanreportMap.TanReport[acc]
+	switch report.Type {
+	case "陶瓷":
+		report.Final = tanhesuan.Taoci(&report.Huashi, &report.Taocizhuanyou, &report.Dianli, Taoci.Huashimodel1, Taoci.Huashimodel2, Taoci.Huashimodel3)
+		break
+	case "镁":
+		report.Final = tanhesuan.Mayanlian(&report.Huashi, &report.Ma, &report.Dianli, Mg.Huashimodel1, Mg.Huashimodel2, Mg.Huashimodel3, Mg.Mg)
+		break
+	default:
+		return shim.Error("No type")
 	}
 	TanreportMap.TanReport[acc] = report
-
-	*/
 	idBytes, err := stub.GetState(acc)
 	if err != nil {
 		return shim.Error("Failed to get state")
@@ -889,15 +864,12 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err != nil {
 		return shim.Error("Error 2 !!")
 	}
-	/*user.TanReport = make(map[int64]TanReport)
 	user.TanReport[user.TanNumber] = report
-	user.Volume = user.Volume - report.Final
+	user.Volume = user.Volume + edd - report.Final
 
-	*/
-	/*delete(TanreportMap.TanReport, user.Account)
+	delete(TanreportMap.TanReport, user.Account)
 	TanreportMap.Number = TanreportMap.Number - 1
 
-	*/
 	newUser, err := json.Marshal(user)
 	if err != nil {
 		return shim.Error("marshal user error")
@@ -905,15 +877,13 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err = stub.PutState(user.Account, newUser); err != nil {
 		return shim.Error("Failed to put state")
 	}
-	/*newTan, err := json.Marshal(TanreportMap)
+	newTan, err := json.Marshal(TanreportMap)
 	if err != nil {
 		return shim.Error("marshal user error")
 	}
 	if err = stub.PutState("TanReportMap", newTan); err != nil {
 		return shim.Error("Failed to put state")
 	}
-
-	*/
 	return shim.Success(nil)
 }
 
