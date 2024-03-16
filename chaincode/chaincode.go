@@ -862,6 +862,9 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err != nil {
 		return shim.Error("Error 2 !!")
 	}
+	if user.TanNumber == 0 {
+		user.TanReport = make(map[int64]TanReport)
+	}
 	user.TanReport[user.TanNumber-1] = report
 	user.Volume = user.Volume + edd - report.Final
 	delete(TanreportMap.TanReport, user.Account)
@@ -921,6 +924,12 @@ func (t *SimpleAsset) ProceedRegister(stub shim.ChaincodeStubInterface, args []s
 	}
 	proceedMap.Proceed[prid] = proceed
 	proceedMap.Number = proceedMap.Number + 1
+	if from.ProceedNumber == 0 {
+		from.Proceed = make(map[string]Proceed)
+	}
+	if to.ProceedNumber == 0 {
+		to.Proceed = make(map[string]Proceed)
+	}
 	from.Proceed[prid] = proceed
 	from.ProceedNumber = from.ProceedNumber + 1
 	to.Proceed[prid] = proceed
@@ -950,8 +959,8 @@ func (t *SimpleAsset) ProceedRegister(stub shim.ChaincodeStubInterface, args []s
 }
 
 func (t *SimpleAsset) Proceed(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 1 {
-		return shim.Error("Incorrect number of args.Expecting 3")
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of args.Expecting 2")
 	}
 	prid := args[0]
 	fin := args[1]
