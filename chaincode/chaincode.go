@@ -128,11 +128,13 @@ type Data_auditor struct {
 }
 
 type Proceed struct {
-	PrID  string `json:"PrID"`
-	ID    string `json:"TradeID"`
-	From  string `json:"From"`
-	To    string `json:"To"`
-	Final string `json:"Final"`
+	PrID   string  `json:"PrID"`
+	ID     string  `json:"TradeID"`
+	From   string  `json:"From"`
+	To     string  `json:"To"`
+	Price  float64 `json:"Price"`
+	Volume float64 `json:"Volume"`
+	Final  string  `json:"Final"`
 }
 
 type ProceedMap struct {
@@ -917,10 +919,12 @@ func (t *SimpleAsset) ProceedRegister(stub shim.ChaincodeStubInterface, args []s
 	}
 	var proceed Proceed
 	proceed = Proceed{
-		PrID: prid,
-		ID:   id,
-		From: userfrom,
-		To:   userto,
+		PrID:   prid,
+		ID:     id,
+		From:   userfrom,
+		To:     userto,
+		Price:  from.FromTrade[id].Price,
+		Volume: from.FromTrade[id].Volume,
 	}
 	var proceedMap ProceedMap
 	proBytes, err := stub.GetState("ProceedMap")
@@ -999,11 +1003,13 @@ func (t *SimpleAsset) Proceed(stub shim.ChaincodeStubInterface, args []string) p
 		return shim.Error("Failed to unmarshal userFrom")
 	}
 	newproceed = Proceed{
-		PrID:  prid,
-		ID:    proceed.ID,
-		From:  proceed.From,
-		To:    proceed.To,
-		Final: fin,
+		PrID:   prid,
+		ID:     proceed.ID,
+		From:   proceed.From,
+		To:     proceed.To,
+		Price:  proceed.Price,
+		Volume: proceed.Volume,
+		Final:  fin,
 	}
 	delete(proceedMap.Proceed, prid)
 	proceedMap.Number = proceedMap.Number - 1
