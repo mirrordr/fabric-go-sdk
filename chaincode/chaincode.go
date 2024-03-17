@@ -110,6 +110,7 @@ type Trade struct {
 	ToAccount   string  `json:"ToAccount"`   //To
 	Volume      float64 `json:"Volume"`      //交易量
 	Price       float64 `json:"Price"`       //交易单价
+	Proceedfin  string  `json:"Proceedfin"`
 }
 
 type TradeMap struct {
@@ -928,6 +929,11 @@ func (t *SimpleAsset) ProceedRegister(stub shim.ChaincodeStubInterface, args []s
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
+	for _, v := range proceedMap.Proceed {
+		if v.ID == id {
+			return shim.Error("have proceed")
+		}
+	}
 	proceedMap.Proceed[prid] = proceed
 	proceedMap.Number = proceedMap.Number + 1
 	if from.ProceedNumber == 0 {
@@ -1004,6 +1010,10 @@ func (t *SimpleAsset) Proceed(stub shim.ChaincodeStubInterface, args []string) p
 	proceedMap.Number = proceedMap.Number - 1
 	from.Proceed[prid] = newproceed
 	to.Proceed[prid] = newproceed
+	trade := from.FromTrade[proceed.ID]
+	trade.Proceedfin = fin
+	from.FromTrade[proceed.ID] = trade
+	to.ToTrade[proceed.ID] = trade
 	newFrom, err := json.Marshal(from)
 	if err != nil {
 		return shim.Error("marshal user error")
