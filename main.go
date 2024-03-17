@@ -288,7 +288,8 @@ func main() {
 	})
 	r.GET("/tanHesuan", func(c *gin.Context) {
 		acc := c.Query("Account")
-		a := []string{"tanHesuan", acc}
+		fina := c.Query("Finally")
+		a := []string{"tanHesuan", acc, fina}
 		response, err := App.TanHesuan(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{

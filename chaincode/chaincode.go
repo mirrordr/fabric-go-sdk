@@ -807,10 +807,11 @@ func (t *SimpleAsset) ChangeMg(stub shim.ChaincodeStubInterface, args []string) 
 }
 
 func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 1 {
+	if len(args) != 2 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
 	acc := args[0]
+	finally := args[1]
 	var TanreportMap TanReportMap
 	mapBytes, err := stub.GetState("TanReportMap")
 	err = json.Unmarshal(mapBytes, &TanreportMap)
@@ -864,7 +865,11 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err != nil {
 		return shim.Error("Error 2 !!")
 	}
-	user.TanReport[user.TanNumber] = report
+	if finally == "False" {
+		report.Final = 0
+		edd = 0
+	}
+	user.TanReport[user.TanNumber-1] = report
 	user.Volume = user.Volume + edd - report.Final
 
 	delete(TanreportMap.TanReport, user.Account)
