@@ -367,8 +367,8 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error("Failed to put state")
 	}
 	ed := ED{
-		Taoci: 500,
-		Mg:    500,
+		Taoci: 5000,
+		Mg:    5000,
 	}
 	edByes, err := json.Marshal(ed)
 	if err != nil {
