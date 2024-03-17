@@ -338,7 +338,7 @@ func main() {
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "failed",
-				"message": "诉讼上传失败",
+				"message": "诉讼处理失败",
 				"data":    err,
 				"test1":   pid,
 				"test2":   fin,
@@ -346,7 +346,7 @@ func main() {
 		} else {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "success",
-				"message": "诉讼上传成功",
+				"message": "诉讼处理成功",
 				"data":    response,
 			})
 		}
