@@ -143,8 +143,8 @@ type ProceedMap struct {
 }
 
 type ED struct {
-	Taoci float64 `json:"Taoci"`
-	Mg    float64 `json:"Mg"`
+	陶瓷 float64 `json:"陶瓷"`
+	镁  float64 `json:"镁"`
 }
 
 // Init /*区块链的初始化
@@ -367,8 +367,8 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error("Failed to put state")
 	}
 	ed := ED{
-		Taoci: 5000,
-		Mg:    5000,
+		陶瓷: 5000,
+		镁:  5000,
 	}
 	edByes, err := json.Marshal(ed)
 	if err != nil {
@@ -842,9 +842,9 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	var report TanReport
 	var edd float64
 	if TanreportMap.TanReport[acc].Type == "陶瓷" {
-		edd = ed.Taoci
+		edd = ed.陶瓷
 	} else {
-		edd = ed.Mg
+		edd = ed.镁
 	}
 	report = TanreportMap.TanReport[acc]
 	switch report.Type {
