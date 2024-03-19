@@ -871,7 +871,7 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	}
 	if finally == "False" {
 		report.Final = -1
-		edd = 0
+		edd = 1
 	}
 	user.TanReport[user.TanNumber-1] = report
 	user.Volume = user.Volume + edd - report.Final
