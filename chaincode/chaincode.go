@@ -411,6 +411,8 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return t.ProceedRegister(stub, args)
 	case "proceed":
 		return t.Proceed(stub, args)
+	case "changeED":
+		return t.ChangeED(stub, args)
 
 	default:
 		return shim.Error("Unsupported function")
@@ -1039,6 +1041,27 @@ func (t *SimpleAsset) Proceed(stub shim.ChaincodeStubInterface, args []string) p
 	return shim.Success(nil)
 
 }
+
+func (t *SimpleAsset) ChangeED(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of args.Expecting 1")
+	}
+	ed := args[0]
+	var newED ED
+	err := json.Unmarshal([]byte(ed), &newED)
+	if err != nil {
+		return shim.Error("can't change 3")
+	}
+	edByes, err := json.Marshal(newED)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("ED", edByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+}
+
 func main() {
 	if err := shim.Start(new(SimpleAsset)); err != nil {
 		fmt.Printf("Error starting SimpleAsset chaincode: %s", err)

@@ -286,6 +286,24 @@ func main() {
 			})
 		}
 	})
+	r.GET("/changeED", func(c *gin.Context) {
+		ed := c.Query("ED")
+		a := []string{"changeED", ed}
+		response, err := App.ChangeED(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "failed",
+				"message": "碳额度更改失败",
+				"data":    err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "碳额度更改成功",
+				"data":    response,
+			})
+		}
+	})
 	r.GET("/tanHesuan", func(c *gin.Context) {
 		acc := c.Query("Account")
 		fina := c.Query("Finally")
