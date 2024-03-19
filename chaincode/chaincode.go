@@ -870,7 +870,7 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 		return shim.Error("Error 2 !!")
 	}
 	if finally == "False" {
-		report.Final = 0
+		report.Final = -1
 		edd = 0
 	}
 	user.TanReport[user.TanNumber-1] = report
