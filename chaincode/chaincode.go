@@ -22,8 +22,14 @@ type TanReport struct {
 	Ma            tanhesuan.Magnesium_smelting_Industry_Production_Process `json:"Ma"`            //镁工业特有
 	Time          time.Time                                                `json:"Time"`          //提交时间
 	Final         float64                                                  `json:"Final"`         //最终结果
+	FinalHuashi   float64                                                  `json:"FinalHuashi"`   //最终结果
+	FinalDianli   float64                                                  `json:"FinalDianli"`   //最终结果
+	FinalTese     float64                                                  `json:"FinalTese"`     //最终结果
 	Type          string                                                   `json:"Type"`          //碳报告类型
 	Examine       Examine                                                  `json:"Examine"`       //监管签名，只有签名了的才可以用于碳币的生成和交易等
+	WenShiTXT     string                                                   `json:"WenShiTXT"`
+	HuoDongTXT    string                                                   `json:"HuoDongTXT"`
+	PaiFangTXT    string                                                   `json:"PaiFangTXT"`
 }
 
 type TaociHeyunsuan struct {
@@ -413,6 +419,8 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return t.Proceed(stub, args)
 	case "changeED":
 		return t.ChangeED(stub, args)
+	case "tanHesuanTXT":
+		return t.TanHesuanTXT(stub, args)
 
 	default:
 		return shim.Error("Unsupported function")
@@ -811,11 +819,15 @@ func (t *SimpleAsset) ChangeMg(stub shim.ChaincodeStubInterface, args []string) 
 }
 
 func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 2 {
+	if len(args) != 6 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
 	acc := args[0]
 	finally := args[1]
+	huashi11 := args[2]
+	huashi22 := args[3]
+	huashi33 := args[4]
+	mg1 := args[5]
 	var TanreportMap TanReportMap
 	mapBytes, err := stub.GetState("TanReportMap")
 	err = json.Unmarshal(mapBytes, &TanreportMap)
@@ -841,6 +853,24 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
+	var huashi1, huashi2, huashi3 tanhesuan.Fossil_Fuel_Combustion
+	var mg tanhesuan.Magnesium_smelting_Industry_Production_Process
+	err = json.Unmarshal([]byte(huashi11), &huashi1)
+	if err != nil {
+		return shim.Error("Failed to change huashi1")
+	}
+	err = json.Unmarshal([]byte(huashi22), &huashi2)
+	if err != nil {
+		return shim.Error("Failed to change huashi2")
+	}
+	err = json.Unmarshal([]byte(huashi33), &huashi3)
+	if err != nil {
+		return shim.Error("Failed to change huashi3")
+	}
+	err = json.Unmarshal([]byte(mg1), &mg)
+	if err != nil {
+		return shim.Error("Failed to change mg")
+	}
 	var report TanReport
 	var edd float64
 	if TanreportMap.TanReport[acc].Type == "陶瓷" {
@@ -851,10 +881,17 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	report = TanreportMap.TanReport[acc]
 	switch report.Type {
 	case "陶瓷":
-		report.Final = tanhesuan.Taoci(&report.Huashi, &report.Taocizhuanyou, &report.Dianli, Taoci.Huashimodel1, Taoci.Huashimodel2, Taoci.Huashimodel3)
+		tanhesuan.StructFieldSum(&huashi1, &Taoci.Huashimodel1)
+		tanhesuan.StructFieldSum(&huashi2, &Taoci.Huashimodel2)
+		tanhesuan.StructFieldSum(&huashi3, &Taoci.Huashimodel3)
+		report.Final, report.FinalHuashi, report.FinalDianli, report.FinalTese = tanhesuan.Taoci(&report.Huashi, &report.Taocizhuanyou, &report.Dianli, huashi1, huashi2, huashi3)
 		break
 	case "镁":
-		report.Final = tanhesuan.Mayanlian(&report.Huashi, &report.Ma, &report.Dianli, Mg.Huashimodel1, Mg.Huashimodel2, Mg.Huashimodel3, Mg.Mg)
+		tanhesuan.StructFieldSum(&huashi1, &Taoci.Huashimodel1)
+		tanhesuan.StructFieldSum(&huashi2, &Taoci.Huashimodel2)
+		tanhesuan.StructFieldSum(&huashi3, &Taoci.Huashimodel3)
+		tanhesuan.StructFieldSum(&mg, &Mg.Mg)
+		report.Final, report.FinalHuashi, report.FinalDianli, report.FinalTese = tanhesuan.Mayanlian(&report.Huashi, &report.Ma, &report.Dianli, huashi1, huashi2, huashi3, mg)
 		break
 	default:
 		return shim.Error("No type")
@@ -886,6 +923,36 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err = stub.PutState(user.Account, newUser); err != nil {
 		return shim.Error("Failed to put state")
 	}
+	newTan, err := json.Marshal(TanreportMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("TanReportMap", newTan); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	return shim.Success(nil)
+}
+
+func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of args.Expecting 3")
+	}
+	acc := args[0]
+	went := args[1]
+	huot := args[2]
+	pait := args[3]
+	var TanreportMap TanReportMap
+	mapBytes, err := stub.GetState("TanReportMap")
+	err = json.Unmarshal(mapBytes, &TanreportMap)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var report TanReport
+	report = TanreportMap.TanReport[acc]
+	report.WenShiTXT = went
+	report.HuoDongTXT = huot
+	report.PaiFangTXT = pait
+	TanreportMap.TanReport[acc] = report
 	newTan, err := json.Marshal(TanreportMap)
 	if err != nil {
 		return shim.Error("marshal user error")

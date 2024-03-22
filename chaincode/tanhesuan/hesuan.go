@@ -2,17 +2,17 @@ package tanhesuan
 
 import "reflect"
 
-func Taoci(hushi *Fossil_Fuel_Combustion, taocizhuanyou *Ceramics_Indusry_Production_Process, dianli *Electricity_And_Heat_Emissions, model1 Fossil_Fuel_Combustion, model2 Fossil_Fuel_Combustion, model3 Fossil_Fuel_Combustion) float64 {
+func Taoci(hushi *Fossil_Fuel_Combustion, taocizhuanyou *Ceramics_Indusry_Production_Process, dianli *Electricity_And_Heat_Emissions, model1 Fossil_Fuel_Combustion, model2 Fossil_Fuel_Combustion, model3 Fossil_Fuel_Combustion) (float64, float64, float64, float64) {
 	var result float64
 	StructFieldMot(&model1, &model2, &model3, hushi)
 	a1 := SumFossil(&model1) * 44 / 12
 	a2 := SumEle(dianli)
 	a3 := taocizhuanyou.Material_weight * taocizhuanyou.Material_utilization_ratio * (44/100*taocizhuanyou.CaCO3_content + 44/84*taocizhuanyou.MgCO3_content)
 	result = a1 + a2 + a3
-	return result
+	return result, a1, a2, a3
 }
 
-func Mayanlian(huashi *Fossil_Fuel_Combustion, ma *Magnesium_smelting_Industry_Production_Process, dianli *Electricity_And_Heat_Emissions, model1 Fossil_Fuel_Combustion, model2 Fossil_Fuel_Combustion, model3 Fossil_Fuel_Combustion, model4 Magnesium_smelting_Industry_Production_Process) float64 {
+func Mayanlian(huashi *Fossil_Fuel_Combustion, ma *Magnesium_smelting_Industry_Production_Process, dianli *Electricity_And_Heat_Emissions, model1 Fossil_Fuel_Combustion, model2 Fossil_Fuel_Combustion, model3 Fossil_Fuel_Combustion, model4 Magnesium_smelting_Industry_Production_Process) (float64, float64, float64, float64) {
 	var result float64
 	StructFieldMot(&model1, &model2, &model3, huashi)
 	a1 := SumFossil(&model1) * 44 / 12
@@ -20,7 +20,7 @@ func Mayanlian(huashi *Fossil_Fuel_Combustion, ma *Magnesium_smelting_Industry_P
 	StructFieldMot(&model4, ma)
 	a3 := model4.Ferrosilicon_yield + model4.Dolomite_consumption*0.478
 	result = a1 + a2 + a3
-	return result
+	return result, a1, a2, a3
 }
 
 func SumFossil(v1 *Fossil_Fuel_Combustion) float64 {

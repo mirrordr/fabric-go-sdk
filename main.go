@@ -307,7 +307,11 @@ func main() {
 	r.GET("/tanHesuan", func(c *gin.Context) {
 		acc := c.Query("Account")
 		fina := c.Query("Finally")
-		a := []string{"tanHesuan", acc, fina}
+		huashi1 := c.Query("Huashi1")
+		huashi2 := c.Query("Huashi2")
+		huashi3 := c.Query("Huashi3")
+		mg1 := c.Query("Mg")
+		a := []string{"tanHesuan", acc, fina, huashi1, huashi2, huashi3, mg1}
 		response, err := App.TanHesuan(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -319,6 +323,27 @@ func main() {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "success",
 				"message": "碳核算成功",
+				"data":    response,
+			})
+		}
+	})
+	r.GET("/tanHesuanTXT", func(c *gin.Context) {
+		acc := c.Query("Account")
+		went := c.Query("Wenshi")
+		huot := c.Query("Huodong")
+		pait := c.Query("Paifang")
+		a := []string{"tanHesuanTXT", acc, went, huot, pait}
+		response, err := App.TanHesuanTXT(a)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "failed",
+				"message": "文本写入失败",
+				"data":    err,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "文本写入成功",
 				"data":    response,
 			})
 		}
