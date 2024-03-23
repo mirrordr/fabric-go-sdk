@@ -910,11 +910,7 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 		report.Final = -1
 		edd = 1
 	}
-	user.TanReport[user.TanNumber-1] = report
 	user.Volume = user.Volume + edd - report.Final
-
-	delete(TanreportMap.TanReport, user.Account)
-	TanreportMap.Number = TanreportMap.Number - 1
 	rebyes, err := json.Marshal(report)
 	if err != nil {
 		return shim.Error("re error")
@@ -937,13 +933,22 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 }
 
 func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 3 {
+	if len(args) != 4 {
 		return shim.Error("Incorrect number of args.Expecting 3")
 	}
 	acc := args[0]
 	went := args[1]
 	huot := args[2]
 	pait := args[3]
+	idBytes, err := stub.GetState(acc)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var user User
+	err = json.Unmarshal(idBytes, &user)
+	if err != nil {
+		return shim.Error("Error 2 !!")
+	}
 	var TanreportMap TanReportMap
 	mapBytes, err := stub.GetState("TanReportMap")
 	err = json.Unmarshal(mapBytes, &TanreportMap)
@@ -955,12 +960,21 @@ func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []stri
 	report.WenShiTXT = went
 	report.HuoDongTXT = huot
 	report.PaiFangTXT = pait
-	TanreportMap.TanReport[acc] = report
+	user.TanReport[user.TanNumber-1] = report
+	delete(TanreportMap.TanReport, user.Account)
+	TanreportMap.Number = TanreportMap.Number - 1
 	newTan, err := json.Marshal(TanreportMap)
 	if err != nil {
 		return shim.Error("marshal user error")
 	}
 	if err = stub.PutState("TanReportMap", newTan); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	newUser, err := json.Marshal(user)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(user.Account, newUser); err != nil {
 		return shim.Error("Failed to put state")
 	}
 	return shim.Success(nil)
