@@ -332,7 +332,8 @@ func main() {
 		went := c.Query("Wenshi")
 		huot := c.Query("Huodong")
 		pait := c.Query("Paifang")
-		a := []string{"tanHesuanTXT", acc, went, huot, pait}
+		qiyt := c.Query("Qiye")
+		a := []string{"tanHesuanTXT", acc, went, huot, pait, qiyt}
 		response, err := App.TanHesuanTXT(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{

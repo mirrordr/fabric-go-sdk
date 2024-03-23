@@ -27,6 +27,7 @@ type TanReport struct {
 	FinalTese     float64                                                  `json:"FinalTese"`     //最终结果
 	Type          string                                                   `json:"Type"`          //碳报告类型
 	Examine       Examine                                                  `json:"Examine"`       //监管签名，只有签名了的才可以用于碳币的生成和交易等
+	QiyeTXT       string                                                   `json:"QiyeTXT"`
 	WenShiTXT     string                                                   `json:"WenShiTXT"`
 	HuoDongTXT    string                                                   `json:"HuoDongTXT"`
 	PaiFangTXT    string                                                   `json:"PaiFangTXT"`
@@ -933,13 +934,14 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 }
 
 func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 4 {
+	if len(args) != 5 {
 		return shim.Error("Incorrect number of args.Expecting 3")
 	}
 	acc := args[0]
 	went := args[1]
 	huot := args[2]
 	pait := args[3]
+	qiyt := args[4]
 	idBytes, err := stub.GetState(acc)
 	if err != nil {
 		return shim.Error("Failed to get state")
@@ -960,6 +962,7 @@ func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []stri
 	report.WenShiTXT = went
 	report.HuoDongTXT = huot
 	report.PaiFangTXT = pait
+	report.QiyeTXT = qiyt
 	user.TanReport[user.TanNumber-1] = report
 	delete(TanreportMap.TanReport, user.Account)
 	TanreportMap.Number = TanreportMap.Number - 1
