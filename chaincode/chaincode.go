@@ -915,7 +915,10 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 
 	delete(TanreportMap.TanReport, user.Account)
 	TanreportMap.Number = TanreportMap.Number - 1
-
+	rebyes, err := json.Marshal(report)
+	if err != nil {
+		return shim.Error("re error")
+	}
 	newUser, err := json.Marshal(user)
 	if err != nil {
 		return shim.Error("marshal user error")
@@ -930,7 +933,7 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err = stub.PutState("TanReportMap", newTan); err != nil {
 		return shim.Error("Failed to put state")
 	}
-	return shim.Success(nil)
+	return shim.Success(rebyes)
 }
 
 func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []string) peer.Response {
