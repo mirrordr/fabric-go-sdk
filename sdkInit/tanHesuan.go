@@ -18,5 +18,5 @@ func (t *Application) TanHesuan(args []string) (string, error) {
 		return "", err
 	}
 
-	return string(response.TransactionID), nil
+	return string(response.Payload), nil
 }
