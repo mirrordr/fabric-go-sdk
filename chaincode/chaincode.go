@@ -31,6 +31,7 @@ type TanReport struct {
 	WenShiTXT     string                                                   `json:"WenShiTXT"`
 	HuoDongTXT    string                                                   `json:"HuoDongTXT"`
 	PaiFangTXT    string                                                   `json:"PaiFangTXT"`
+	Hesuanyinzi   MgHeyunsuan                                              `json:"Hesuanyinzi"`
 }
 
 type TaociHeyunsuan struct {
@@ -882,21 +883,25 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	report = TanreportMap.TanReport[acc]
 	switch report.Type {
 	case "陶瓷":
-		tanhesuan.StructFieldSum(&huashi1, &Taoci.Huashimodel1)
-		tanhesuan.StructFieldSum(&huashi2, &Taoci.Huashimodel2)
-		tanhesuan.StructFieldSum(&huashi3, &Taoci.Huashimodel3)
+		tanhesuan.ReplaceZeroFields(&huashi1, &Taoci.Huashimodel1)
+		tanhesuan.ReplaceZeroFields(&huashi2, &Taoci.Huashimodel2)
+		tanhesuan.ReplaceZeroFields(&huashi3, &Taoci.Huashimodel3)
 		report.Final, report.FinalHuashi, report.FinalDianli, report.FinalTese = tanhesuan.Taoci(&report.Huashi, &report.Taocizhuanyou, &report.Dianli, huashi1, huashi2, huashi3)
 		break
 	case "镁":
-		tanhesuan.StructFieldSum(&huashi1, &Taoci.Huashimodel1)
-		tanhesuan.StructFieldSum(&huashi2, &Taoci.Huashimodel2)
-		tanhesuan.StructFieldSum(&huashi3, &Taoci.Huashimodel3)
-		tanhesuan.StructFieldSum(&mg, &Mg.Mg)
+		tanhesuan.ReplaceZeroFields(&huashi1, &Taoci.Huashimodel1)
+		tanhesuan.ReplaceZeroFields(&huashi2, &Taoci.Huashimodel2)
+		tanhesuan.ReplaceZeroFields(&huashi3, &Taoci.Huashimodel3)
+		tanhesuan.ReplaceZeroFields(&mg, &Mg.Mg)
 		report.Final, report.FinalHuashi, report.FinalDianli, report.FinalTese = tanhesuan.Mayanlian(&report.Huashi, &report.Ma, &report.Dianli, huashi1, huashi2, huashi3, mg)
 		break
 	default:
 		return shim.Error("No type")
 	}
+	report.Hesuanyinzi.Huashimodel1 = huashi1
+	report.Hesuanyinzi.Huashimodel2 = huashi2
+	report.Hesuanyinzi.Huashimodel3 = huashi3
+	report.Hesuanyinzi.Mg = mg
 	TanreportMap.TanReport[acc] = report
 	idBytes, err := stub.GetState(acc)
 	if err != nil {

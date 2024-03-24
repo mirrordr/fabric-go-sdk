@@ -140,3 +140,20 @@ func StructFieldMot(val interface{}, args ...interface{}) {
 		}
 	}
 }
+func ReplaceZeroFields(structA, structB interface{}) {
+	valA := reflect.ValueOf(structA).Elem()
+	valB := reflect.ValueOf(structB).Elem()
+
+	for i := 0; i < valA.NumField(); i++ {
+		fieldA := valA.Field(i)
+		fieldB := valB.Field(i)
+
+		// 确保两个字段都是 float64 类型
+		if fieldA.Kind() == reflect.Float64 && fieldB.Kind() == reflect.Float64 {
+			if fieldA.Float() == 0 {
+				// 如果 A 结构体中的字段值为 0，则用 B 结构体中对应字段的值替换
+				fieldA.SetFloat(fieldB.Float())
+			}
+		}
+	}
+}
