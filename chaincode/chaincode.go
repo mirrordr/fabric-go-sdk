@@ -64,6 +64,7 @@ type User struct {
 	ToTrade       map[string]Trade    `json:"ToTrade"`       //选择交易的交易信息
 	TanReport     map[int64]TanReport `json:"TanReport"`     //谈报告的具体信息
 	Proceed       map[string]Proceed  `json:"Proceed"`
+	Key           Key                 `json:"Key"`
 }
 
 /*
@@ -130,7 +131,7 @@ type TanReportMap struct {
 	TanReport map[string]TanReport `json:"TanReport"`
 }
 
-type Data_auditor struct {
+type Key struct {
 	ExaminePK *big.Int `json:"ExaminePK"`
 	ExamineSK *big.Int `json:"ExamineSK"`
 }
@@ -160,8 +161,15 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	test1 := User{
 		Account: "test1",
 		CompanyInfo: CompanyInfo{
-			Name: "test1Company",
-			Type: "陶瓷",
+			Name:               "山西宸锦镁冶炼有限公司",
+			RegistrationNumber: "91140931MA7XJ3E35J",
+			Contact: Contact{
+				Email: "413899274@qq.com",
+			},
+			EstablishmentDate: "2022-07-15",
+			RegisteredCapital: "6000万元",
+			Address:           "山西省忻州市保德县义门镇天桥村S249省道东50米",
+			Type:              "镁",
 		},
 		Balance: 100,
 		Volume:  100,
@@ -176,8 +184,15 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	test2 := User{
 		Account: "test2",
 		CompanyInfo: CompanyInfo{
-			Name: "test2Company",
-			Type: "镁",
+			Name:               "清水河县恒得益金属镁冶炼有限责任公司",
+			RegistrationNumber: "91150124552822870K",
+			Contact: Contact{
+				Email: "786606864@qq.com",
+			},
+			EstablishmentDate: "2003-12-09",
+			RegisteredCapital: "1050万元",
+			Address:           "内蒙古自治区呼和浩特市清水河县窑沟乡大沙湾村",
+			Type:              "镁",
 		},
 		Balance: 100,
 		Volume:  100,
@@ -187,6 +202,52 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error("marshal user error")
 	}
 	if err = stub.PutState(test2.Account, test2Byes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	test3 := User{
+		Account: "test3",
+		CompanyInfo: CompanyInfo{
+			Name:               "湖南华联瓷业股份有限公司",
+			RegistrationNumber: "91430000616610579W",
+			Contact: Contact{
+				Email: "lengziyanzlq@126.com",
+			},
+			EstablishmentDate: "1994-08-01",
+			RegisteredCapital: "25186万元",
+			Address:           "湖南省醴陵经济开发区瓷谷大道",
+			Type:              "陶瓷",
+		},
+		Balance: 100,
+		Volume:  100,
+	}
+	test3Byes, err := json.Marshal(test3)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(test3.Account, test3Byes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	test4 := User{
+		Account: "test4",
+		CompanyInfo: CompanyInfo{
+			Name:               "广东博华陶瓷有限公司",
+			RegistrationNumber: "914418007564675084",
+			Contact: Contact{
+				Email: "903809481@qq.com",
+			},
+			EstablishmentDate: "2003-11-27",
+			RegisteredCapital: "71800万元",
+			Address:           "广东省佛冈县龙山镇陶瓷城",
+			Type:              "陶瓷",
+		},
+		Balance: 100,
+		Volume:  100,
+	}
+	test4Byes, err := json.Marshal(test4)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(test4.Account, test4Byes); err != nil {
 		return shim.Error("Failed to put state")
 	}
 	tradeMap := TradeMap{
@@ -440,9 +501,10 @@ func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []stri
 	acc := args[0]
 	info1 := args[1]
 	bal := args[2]
+	key := args[3]
 	info := strings.Replace(info1, "\\", "", -1)
 	fmt.Println(info1)
-	if acc == "" || bal == "" || info == "" {
+	if acc == "" || bal == "" || info == "" || key == "" {
 		return shim.Error("Invalid args.")
 	}
 	accountByes, err := stub.GetState(acc)
@@ -455,11 +517,18 @@ func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []stri
 	if err != nil {
 		return shim.Error("can't change")
 	}
+	var Key1 Key
+	err = json.Unmarshal([]byte(key), &Key1)
+	if err != nil {
+		return shim.Error("can't change")
+	}
+
 	user := User{
 		Account:     acc,
 		CompanyInfo: companyInfo,
 		Balance:     balance,
 		Volume:      100,
+		Key:         Key1,
 	}
 	userByes, err := json.Marshal(user)
 	if err != nil {

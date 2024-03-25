@@ -90,7 +90,8 @@ func main() {
 		acc := c.Query("Account")
 		cominfo := c.Query("CompanyInfo")
 		bal := c.Query("Balance")
-		a := []string{"userRegister", acc, cominfo, bal}
+		key := c.Query("Key")
+		a := []string{"userRegister", acc, cominfo, bal, key}
 		response, err := App.UserRegister(a)
 		fmt.Println(cominfo)
 		if err != nil {

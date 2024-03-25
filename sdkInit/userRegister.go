@@ -11,7 +11,7 @@ func (t *Application) UserRegister(args []string) (string, error) {
 		tempArgs = append(tempArgs, []byte(args[i]))
 	}
 
-	request := channel.Request{ChaincodeID: t.SdkEnvInfo.ChaincodeID, Fcn: args[0], Args: [][]byte{[]byte(args[1]), []byte(args[2]), []byte(args[3])}}
+	request := channel.Request{ChaincodeID: t.SdkEnvInfo.ChaincodeID, Fcn: args[0], Args: [][]byte{[]byte(args[1]), []byte(args[2]), []byte(args[3]), []byte(args[4])}}
 	fmt.Println(args[0])
 	fmt.Println(args[1])
 	fmt.Println(args[2])
