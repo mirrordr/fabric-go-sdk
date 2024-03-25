@@ -34,6 +34,12 @@ type TanReport struct {
 	Hesuanyinzi   MgHeyunsuan                                              `json:"Hesuanyinzi"`
 }
 
+type EX struct {
+	A *big.Int `json:"A"`
+	B *big.Int `json:"B"`
+	U *big.Int `json:"U"`
+}
+
 type TaociHeyunsuan struct {
 	Huashimodel1 tanhesuan.Fossil_Fuel_Combustion `json:"Huashimodel1"`
 	Huashimodel2 tanhesuan.Fossil_Fuel_Combustion `json:"Huashimodel2"`
@@ -71,10 +77,11 @@ type User struct {
 审核相关
 */
 type Examine struct {
-	IsExamine   string `json:"IsExamine"`
-	ExamineType string `json:"ExamineType"`
-	Examiner    string `json:"Examiner"`
-	Sign        string `json:"Sign"`
+	Number   int64          `json:"Number"`
+	Examiner map[int64]User `json:"Examiner"`
+	Ex       map[int64]EX   `json:"Ex"`
+	H1       *big.Int       `json:"H1"`
+	H2       *big.Int       `json:"H2"`
 }
 
 /*
@@ -132,8 +139,10 @@ type TanReportMap struct {
 }
 
 type Key struct {
-	ExaminePK *big.Int `json:"ExaminePK"`
-	ExamineSK *big.Int `json:"ExamineSK"`
+	ExaminePKR *big.Int `json:"ExaminePKR"`
+	ExaminePKS *big.Int `json:"ExaminePKS"`
+	ExamineSKR *big.Int `json:"ExamineSKR"`
+	ExamineSKS *big.Int `json:"ExamineSKS"`
 }
 
 type Proceed struct {
@@ -154,6 +163,11 @@ type ProceedMap struct {
 type ED struct {
 	Taoci float64 `json:"陶瓷"`
 	Mg    float64 `json:"镁"`
+}
+
+type UserMap struct {
+	Number int64           `json:"Number"`
+	User   map[string]User `json:"User"`
 }
 
 // Init /*区块链的初始化
@@ -444,6 +458,17 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error("marshal user error")
 	}
 	if err = stub.PutState("ED", edByes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	userMap := UserMap{
+		Number: 0,
+		User:   make(map[string]User),
+	}
+	usemapByes, err := json.Marshal(userMap)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState("UserMap", usemapByes); err != nil {
 		return shim.Error("Failed to put state")
 	}
 	fmt.Printf("init...")

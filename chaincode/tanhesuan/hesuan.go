@@ -1,6 +1,9 @@
 package tanhesuan
 
-import "reflect"
+import (
+	"math/big"
+	"reflect"
+)
 
 func Taoci(hushi *Fossil_Fuel_Combustion, taocizhuanyou *Ceramics_Indusry_Production_Process, dianli *Electricity_And_Heat_Emissions, model1 Fossil_Fuel_Combustion, model2 Fossil_Fuel_Combustion, model3 Fossil_Fuel_Combustion) (float64, float64, float64, float64) {
 	var result float64
@@ -155,5 +158,32 @@ func ReplaceZeroFields(structA, structB interface{}) {
 				fieldA.SetFloat(fieldB.Float())
 			}
 		}
+	}
+}
+
+func EXJuHe(a1, a2, a3, b1, b2, b3, u1, u2, u3 *big.Int) (*big.Int, *big.Int, *big.Int) {
+	a := new(big.Int).Add(a1, new(big.Int).Add(a2, a3))
+	b := new(big.Int).Add(b1, new(big.Int).Add(b2, b3))
+	u := new(big.Int).Mul(u1, new(big.Int).Mul(u2, u3))
+	return a, b, u
+}
+
+func PKJuHe(r1, r2, r3, s1, s2, s3 *big.Int) (*big.Int, *big.Int) {
+	r := new(big.Int).Mul(r1, new(big.Int).Mul(r2, r3))
+	s := new(big.Int).Mul(s1, new(big.Int).Mul(s2, s3))
+	return r, s
+}
+
+func YanZheng(h1, h2, a, b, u, r, s *big.Int) int64 {
+	p, _ := new(big.Int).SetString("11354492342642070887128067569374510012280963720199556171757661158988200922003422988172509277025982170385824569298950067555517998425368826215811089098953659", 10)
+	g, _ := new(big.Int).SetString("5845106984648640168199956353344722223117328802648400371662308688681439423990963724660129527848629790950521977946161148517314058321656359945838375854931969", 10)
+	m1 := new(big.Int).Mod(new(big.Int).Mul(new(big.Int).Exp(u, h1, p), r), p)
+	m2 := new(big.Int).Mod(new(big.Int).Mul(new(big.Int).Exp(u, h2, p), s), p)
+	m3 := new(big.Int).Exp(g, a, p)
+	m4 := new(big.Int).Exp(g, b, p)
+	if m1 == m3 && m2 == m4 {
+		return 1
+	} else {
+		return 0
 	}
 }
