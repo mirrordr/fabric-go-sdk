@@ -307,12 +307,11 @@ func main() {
 	})
 	r.GET("/tanHesuan", func(c *gin.Context) {
 		acc := c.Query("Account")
-		fina := c.Query("Finally")
 		huashi1 := c.Query("Huashi1")
 		huashi2 := c.Query("Huashi2")
 		huashi3 := c.Query("Huashi3")
 		mg1 := c.Query("Mg")
-		a := []string{"tanHesuan", acc, fina, huashi1, huashi2, huashi3, mg1}
+		a := []string{"tanHesuan", acc, huashi1, huashi2, huashi3, mg1}
 		response, err := App.TanHesuan(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -334,7 +333,11 @@ func main() {
 		huot := c.Query("Huodong")
 		pait := c.Query("Paifang")
 		qiyt := c.Query("Qiye")
-		a := []string{"tanHesuanTXT", acc, went, huot, pait, qiyt}
+		eacc := c.Query("ExAccount")
+		examine := c.Query("Examine")
+		h1 := c.Query("H1")
+		h2 := c.Query("H2")
+		a := []string{"tanHesuanTXT", acc, went, huot, pait, qiyt, eacc, examine, h1, h2}
 		response, err := App.TanHesuanTXT(a)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{

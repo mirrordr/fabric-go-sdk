@@ -77,11 +77,12 @@ type User struct {
 审核相关
 */
 type Examine struct {
-	Number   int64          `json:"Number"`
-	Examiner map[int64]User `json:"Examiner"`
-	Ex       map[int64]EX   `json:"Ex"`
-	H1       *big.Int       `json:"H1"`
-	H2       *big.Int       `json:"H2"`
+	Number   int64            `json:"Number"`
+	Examiner map[int64]string `json:"Examiner"`
+	ExPK     map[int64]Key    `json:"ExPK"`
+	Ex       map[int64]EX     `json:"Ex"`
+	H1       *big.Int         `json:"H1"`
+	H2       *big.Int         `json:"H2"`
 }
 
 /*
@@ -173,7 +174,7 @@ type UserMap struct {
 // Init /*区块链的初始化
 func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	test1 := User{
-		Account: "test1",
+		Account: "山西宸锦镁冶炼有限公司",
 		CompanyInfo: CompanyInfo{
 			Name:               "山西宸锦镁冶炼有限公司",
 			RegistrationNumber: "91140931MA7XJ3E35J",
@@ -196,7 +197,7 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error("Failed to put state")
 	}
 	test2 := User{
-		Account: "test2",
+		Account: "清水河县恒得益金属镁冶炼有限责任公司",
 		CompanyInfo: CompanyInfo{
 			Name:               "清水河县恒得益金属镁冶炼有限责任公司",
 			RegistrationNumber: "91150124552822870K",
@@ -219,7 +220,7 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error("Failed to put state")
 	}
 	test3 := User{
-		Account: "test3",
+		Account: "湖南华联瓷业股份有限公司",
 		CompanyInfo: CompanyInfo{
 			Name:               "湖南华联瓷业股份有限公司",
 			RegistrationNumber: "91430000616610579W",
@@ -242,7 +243,7 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 		return shim.Error("Failed to put state")
 	}
 	test4 := User{
-		Account: "test4",
+		Account: "广东博华陶瓷有限公司",
 		CompanyInfo: CompanyInfo{
 			Name:               "广东博华陶瓷有限公司",
 			RegistrationNumber: "914418007564675084",
@@ -264,9 +265,103 @@ func (t *SimpleAsset) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	if err = stub.PutState(test4.Account, test4Byes); err != nil {
 		return shim.Error("Failed to put state")
 	}
+	test5 := User{
+		Account: "陈嘉祥",
+		CompanyInfo: CompanyInfo{
+			Name:               "陈嘉祥",
+			RegistrationNumber: "914418007564675084",
+			Contact: Contact{
+				Email: "903809481@qq.com",
+			},
+			EstablishmentDate: "2003-11-27",
+			RegisteredCapital: "71800万元",
+			Address:           "广东省佛冈县龙山镇陶瓷城",
+			Type:              "陶瓷",
+		},
+		Balance: 100,
+		Volume:  100,
+	}
+	test5Byes, err := json.Marshal(test5)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(test5.Account, test5Byes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	test6 := User{
+		Account: "叶鸿冰",
+		CompanyInfo: CompanyInfo{
+			Name:               "叶鸿冰",
+			RegistrationNumber: "914418007564675084",
+			Contact: Contact{
+				Email: "903809481@qq.com",
+			},
+			EstablishmentDate: "2003-11-27",
+			RegisteredCapital: "71800万元",
+			Address:           "广东省佛冈县龙山镇陶瓷城",
+			Type:              "陶瓷",
+		},
+		Balance: 100,
+		Volume:  100,
+	}
+	test6Byes, err := json.Marshal(test6)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(test6.Account, test6Byes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+	test7 := User{
+		Account: "福嘉同",
+		CompanyInfo: CompanyInfo{
+			Name:               "福嘉同",
+			RegistrationNumber: "914418007564675084",
+			Contact: Contact{
+				Email: "903809481@qq.com",
+			},
+			EstablishmentDate: "2003-11-27",
+			RegisteredCapital: "71800万元",
+			Address:           "广东省佛冈县龙山镇陶瓷城",
+			Type:              "陶瓷",
+		},
+		Balance: 100,
+		Volume:  100,
+	}
+	test7Byes, err := json.Marshal(test7)
+	if err != nil {
+		return shim.Error("marshal user error")
+	}
+	if err = stub.PutState(test7.Account, test7Byes); err != nil {
+		return shim.Error("Failed to put state")
+	}
+
 	tradeMap := TradeMap{
-		Number: 0,
+		Number: 4,
 		Trade:  make(map[string]Trade),
+	}
+	tradeMap.Trade["eed1d60f-571f-41f3-b482-2dd4ab59d18e"] = Trade{
+		TradeId:     "eed1d60f-571f-41f3-b482-2dd4ab59d18e",
+		FromAccount: test2.Account,
+		Volume:      12345,
+		Price:       1.1,
+	}
+	tradeMap.Trade["613d6f74-3336-4abb-8564-f146d0740d04"] = Trade{
+		TradeId:     "613d6f74-3336-4abb-8564-f146d0740d04",
+		FromAccount: test3.Account,
+		Volume:      54321,
+		Price:       1.2,
+	}
+	tradeMap.Trade["7518e422-d816-4779-8ab7-102ee0d90845"] = Trade{
+		TradeId:     "7518e422-d816-4779-8ab7-102ee0d90845",
+		FromAccount: test1.Account,
+		Volume:      12036,
+		Price:       1.01,
+	}
+	tradeMap.Trade["0b3c0578-6081-43cf-8d12-981a6ad38d80"] = Trade{
+		TradeId:     "0b3c0578-6081-43cf-8d12-981a6ad38d80",
+		FromAccount: test4.Account,
+		Volume:      6208,
+		Price:       1.05,
 	}
 	tradeByes, err := json.Marshal(tradeMap)
 	if err != nil {
@@ -520,7 +615,7 @@ func (t *SimpleAsset) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 创建一个account对应的User存储结构体并实现上链
 */
 func (t *SimpleAsset) UserRegister(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 3 {
+	if len(args) != 4 {
 		return shim.Error("Incorrect number of args.Expecting 5")
 	}
 	acc := args[0]
@@ -850,6 +945,9 @@ func (t *SimpleAsset) TanReportRegister(stub shim.ChaincodeStubInterface, args [
 	Time := time.Now()
 	Tanreport.Time = Time
 	Tanreport.Type = user.CompanyInfo.Type
+	Tanreport.Examine.Examiner = make(map[int64]string)
+	Tanreport.Examine.ExPK = make(map[int64]Key)
+	Tanreport.Examine.Ex = make(map[int64]EX)
 	user.TanReport[user.TanNumber] = Tanreport
 	TanreportMap.Number = TanreportMap.Number + 1
 	if _, ok := TanreportMap.TanReport[user.Account]; ok {
@@ -915,15 +1013,14 @@ func (t *SimpleAsset) ChangeMg(stub shim.ChaincodeStubInterface, args []string) 
 }
 
 func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 6 {
+	if len(args) != 5 {
 		return shim.Error("Incorrect number of args.Expecting 1")
 	}
 	acc := args[0]
-	finally := args[1]
-	huashi11 := args[2]
-	huashi22 := args[3]
-	huashi33 := args[4]
-	mg1 := args[5]
+	huashi11 := args[1]
+	huashi22 := args[2]
+	huashi33 := args[3]
+	mg1 := args[4]
 	var TanreportMap TanReportMap
 	mapBytes, err := stub.GetState("TanReportMap")
 	err = json.Unmarshal(mapBytes, &TanreportMap)
@@ -936,13 +1033,6 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
-	var ed ED
-	edBytes, err := stub.GetState("ED")
-	err = json.Unmarshal(edBytes, &ed)
-	if err != nil {
-		return shim.Error("Failed to get state")
-	}
-
 	var Mg MgHeyunsuan
 	mgBytes, err := stub.GetState("Mg")
 	err = json.Unmarshal(mgBytes, &Mg)
@@ -968,12 +1058,6 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 		return shim.Error("Failed to change mg")
 	}
 	var report TanReport
-	var edd float64
-	if TanreportMap.TanReport[acc].Type == "陶瓷" {
-		edd = ed.Taoci
-	} else {
-		edd = ed.Mg
-	}
 	report = TanreportMap.TanReport[acc]
 	switch report.Type {
 	case "陶瓷":
@@ -997,31 +1081,6 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	report.Hesuanyinzi.Huashimodel3 = huashi3
 	report.Hesuanyinzi.Mg = mg
 	TanreportMap.TanReport[acc] = report
-	idBytes, err := stub.GetState(acc)
-	if err != nil {
-		return shim.Error("Failed to get state")
-	}
-	var user User
-	err = json.Unmarshal(idBytes, &user)
-	if err != nil {
-		return shim.Error("Error 2 !!")
-	}
-	if finally == "False" {
-		report.Final = -1
-		edd = 1
-	}
-	user.Volume = user.Volume + edd - report.Final
-	rebyes, err := json.Marshal(report)
-	if err != nil {
-		return shim.Error("re error")
-	}
-	newUser, err := json.Marshal(user)
-	if err != nil {
-		return shim.Error("marshal user error")
-	}
-	if err = stub.PutState(user.Account, newUser); err != nil {
-		return shim.Error("Failed to put state")
-	}
 	newTan, err := json.Marshal(TanreportMap)
 	if err != nil {
 		return shim.Error("marshal user error")
@@ -1029,11 +1088,11 @@ func (t *SimpleAsset) TanHesuan(stub shim.ChaincodeStubInterface, args []string)
 	if err = stub.PutState("TanReportMap", newTan); err != nil {
 		return shim.Error("Failed to put state")
 	}
-	return shim.Success(rebyes)
+	return shim.Success(nil)
 }
 
 func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	if len(args) != 5 {
+	if len(args) != 9 {
 		return shim.Error("Incorrect number of args.Expecting 3")
 	}
 	acc := args[0]
@@ -1041,12 +1100,24 @@ func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []stri
 	huot := args[2]
 	pait := args[3]
 	qiyt := args[4]
+	eacc := args[5]
+	examine := args[6]
+	h1 := args[7]
+	h2 := args[8]
 	idBytes, err := stub.GetState(acc)
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
-	var user User
+	var user, euser User
 	err = json.Unmarshal(idBytes, &user)
+	if err != nil {
+		return shim.Error("Error 2 !!")
+	}
+	eidBytes, err := stub.GetState(eacc)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	err = json.Unmarshal(eidBytes, &euser)
 	if err != nil {
 		return shim.Error("Error 2 !!")
 	}
@@ -1056,15 +1127,66 @@ func (t *SimpleAsset) TanHesuanTXT(stub shim.ChaincodeStubInterface, args []stri
 	if err != nil {
 		return shim.Error("Failed to get state")
 	}
+	var Ed ED
+	edBytes, err := stub.GetState("ED")
+	err = json.Unmarshal(edBytes, &Ed)
+	if err != nil {
+		return shim.Error("Failed to get state")
+	}
+	var ed float64
+	if user.CompanyInfo.Type == "陶瓷" {
+		ed = Ed.Taoci
+	} else {
+		ed = Ed.Mg
+	}
 	var report TanReport
 	report = TanreportMap.TanReport[acc]
 	report.WenShiTXT = went
 	report.HuoDongTXT = huot
 	report.PaiFangTXT = pait
 	report.QiyeTXT = qiyt
-	user.TanReport[user.TanNumber-1] = report
-	delete(TanreportMap.TanReport, user.Account)
-	TanreportMap.Number = TanreportMap.Number - 1
+	report.Examine.H1, _ = new(big.Int).SetString(h1, 10)
+	report.Examine.H2, _ = new(big.Int).SetString(h2, 10)
+	report.Examine.Examiner[report.Examine.Number] = eacc
+	var ex EX
+	err = json.Unmarshal([]byte(examine), &ex)
+	if err != nil {
+		return shim.Error("Error 2 !!")
+	}
+	report.Examine.Ex[report.Examine.Number] = ex
+	report.Examine.Number = report.Examine.Number + 1
+	if report.Examine.Number == 3 {
+		a, b, u := tanhesuan.EXJuHe(report.Examine.Ex[0].A, report.Examine.Ex[1].A, report.Examine.Ex[2].A, report.Examine.Ex[0].B, report.Examine.Ex[1].B, report.Examine.Ex[2].B, report.Examine.Ex[0].U, report.Examine.Ex[1].U, report.Examine.Ex[2].U)
+		report.Examine.Ex[3] = EX{
+			A: a,
+			B: b,
+			U: u,
+		}
+		r, s := tanhesuan.PKJuHe(report.Examine.ExPK[0].ExaminePKR, report.Examine.ExPK[1].ExaminePKR, report.Examine.ExPK[2].ExaminePKR, report.Examine.ExPK[0].ExaminePKS, report.Examine.ExPK[1].ExaminePKS, report.Examine.ExPK[2].ExaminePKS)
+		report.Examine.ExPK[3] = Key{
+			ExaminePKR: r,
+			ExaminePKS: s,
+		}
+		result := tanhesuan.YanZheng(report.Examine.H1, report.Examine.H2, report.Examine.Ex[3].A, report.Examine.Ex[3].B, report.Examine.Ex[3].U, report.Examine.ExPK[3].ExaminePKR, report.Examine.ExPK[3].ExaminePKS)
+		if result == 1 {
+			user.TanReport[user.TanNumber-1] = report
+			user.Volume = user.Volume + ed - report.Final
+			delete(TanreportMap.TanReport, user.Account)
+			TanreportMap.Number = TanreportMap.Number - 1
+		} else {
+			report.Final = -1
+			user.TanReport[user.TanNumber-1] = report
+			delete(TanreportMap.TanReport, user.Account)
+			TanreportMap.Number = TanreportMap.Number - 1
+		}
+	} else {
+		report.Examine.Ex[report.Examine.Number] = ex
+		report.Examine.Examiner[report.Examine.Number] = acc
+		report.Examine.ExPK[report.Examine.Number] = euser.Key
+		report.Examine.H1, _ = new(big.Int).SetString(h1, 10)
+		report.Examine.H2, _ = new(big.Int).SetString(h2, 10)
+	}
+
 	newTan, err := json.Marshal(TanreportMap)
 	if err != nil {
 		return shim.Error("marshal user error")
